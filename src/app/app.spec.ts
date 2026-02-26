@@ -37,12 +37,12 @@ describe('App', () => {
     ]);
   });
 
-  it('should include ILR date estimator in assessment tab', async () => {
+  it('should include quick check content in assessment tab', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('ILR Date Estimator');
+    expect(compiled.textContent).toContain('Quick Check');
   });
 
   it('should show travel tab content when selected', async () => {
