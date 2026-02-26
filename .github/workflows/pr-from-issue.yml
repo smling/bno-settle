@@ -1,0 +1,73 @@
+name: PR From Issue
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+jobs:
+  sync-pr-from-issue:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync PR title and template placeholders from linked issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || "";
+
+            // Requires "Closes #123", "Fixes #123", etc in PR body.
+            const match = body.match(/(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/i);
+            if (!match) {
+              core.info("No linked issue keyword found in PR body. Skipping.");
+              return;
+            }
+
+            const issueNumber = Number(match[1]);
+            if (!Number.isInteger(issueNumber) || issueNumber <= 0) {
+              core.info("Invalid issue number. Skipping.");
+              return;
+            }
+
+            const issueResponse = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber
+            });
+
+            const issue = issueResponse.data;
+            const issueTitle = issue.title || `Issue #${issueNumber}`;
+            const issueBody = (issue.body && issue.body.trim().length > 0)
+              ? issue.body
+              : "_No issue description provided._";
+
+            let nextBody = body;
+            if (nextBody.includes("<!-- ISSUE_TITLE -->")) {
+              nextBody = nextBody.replace("<!-- ISSUE_TITLE -->", issueTitle);
+            }
+            if (nextBody.includes("<!-- ISSUE_BODY -->")) {
+              nextBody = nextBody.replace("<!-- ISSUE_BODY -->", issueBody);
+            }
+
+            const needsTitleUpdate = pr.title !== issueTitle;
+            const needsBodyUpdate = nextBody !== body;
+            if (!needsTitleUpdate && !needsBodyUpdate) {
+              core.info("PR already synced with issue content. Skipping.");
+              return;
+            }
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              title: needsTitleUpdate ? issueTitle : pr.title,
+              body: needsBodyUpdate ? nextBody : body
+            });
