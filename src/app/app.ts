@@ -56,6 +56,7 @@ export class App {
       const state: PersistedTravelTimingState = {
         records: this.travelTimingContext.records().map((record) => ({ ...record })),
         visaApprovedDate: this.travelTimingContext.visaApprovedDate(),
+        arrivedUkDate: this.travelTimingContext.arrivedUkDate(),
         estimate: this.cloneEstimate(this.travelTimingContext.estimate())
       };
       void this.travelTimingPersistenceService.saveTravelTimingState(state);
@@ -70,6 +71,7 @@ export class App {
       }
       this.travelTimingContext.records.set(persisted.records.map((record) => ({ ...record })));
       this.travelTimingContext.visaApprovedDate.set(persisted.visaApprovedDate);
+      this.travelTimingContext.arrivedUkDate.set(persisted.arrivedUkDate);
       this.travelTimingContext.estimate.set(this.cloneEstimate(persisted.estimate));
     } finally {
       this.hasHydratedTravelTimingState.set(true);

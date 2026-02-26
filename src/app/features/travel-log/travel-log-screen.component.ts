@@ -12,12 +12,10 @@ import { TravelTimingContext } from '../../models/travel-timing-context.model';
 import { TravelRecord } from '../../models/spec.models';
 import { TravelLogStateService } from '../../services/travel-log-state.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
-
-interface CountryOption {
-  code: string;
-  labelKey: string;
-  flag: string;
-}
+import {
+  CountryOption,
+  ISO_3166_1_ALPHA_2_COUNTRY_OPTIONS
+} from './iso-3166-1-alpha-2-country-options';
 
 interface TravelFormModel {
   departDate: string;
@@ -260,16 +258,7 @@ export class TravelLogScreenComponent {
   protected readonly i18n = inject(I18nService);
   @Input() public travelTimingContext: TravelTimingContext | null = null;
 
-  protected readonly countries: CountryOption[] = [
-    { code: 'HK', labelKey: 'country.hk', flag: '🇭🇰' },
-    { code: 'GB', labelKey: 'country.gb', flag: '🇬🇧' },
-    { code: 'JP', labelKey: 'country.jp', flag: '🇯🇵' },
-    { code: 'FR', labelKey: 'country.fr', flag: '🇫🇷' },
-    { code: 'US', labelKey: 'country.us', flag: '🇺🇸' },
-    { code: 'CA', labelKey: 'country.ca', flag: '🇨🇦' },
-    { code: 'AU', labelKey: 'country.au', flag: '🇦🇺' },
-    { code: 'SG', labelKey: 'country.sg', flag: '🇸🇬' }
-  ];
+  protected readonly countries: CountryOption[] = ISO_3166_1_ALPHA_2_COUNTRY_OPTIONS;
 
   protected form: TravelFormModel = {
     departDate: '',

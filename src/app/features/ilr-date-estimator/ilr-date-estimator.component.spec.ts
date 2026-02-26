@@ -21,8 +21,10 @@ describe('IlrDateEstimatorComponent', () => {
     await fixture.whenStable();
 
     const text = (fixture.nativeElement as HTMLElement).textContent;
-    expect(text).toContain('Visa expiry date: 2029-03-01');
-    expect(text).toContain('Earliest ILR apply date: 2029-02-01');
+    expect(text).toContain('Visa expiry date');
+    expect(text).toContain('Earliest ILR apply date');
+    expect(text).toContain('2029-03-01');
+    expect(text).toContain('2029-02-01');
   });
 
   it('should calculate when the form is submitted', async () => {
@@ -38,7 +40,8 @@ describe('IlrDateEstimatorComponent', () => {
 
     const text = (fixture.nativeElement as HTMLElement).textContent;
     expect(component.estimate).not.toBeNull();
-    expect(text).toContain('Earliest ILR apply date: 2029-02-01');
+    expect(text).toContain('Earliest ILR apply date');
+    expect(text).toContain('2029-02-01');
   });
 
   it('should show validation message for invalid input', async () => {
@@ -53,6 +56,23 @@ describe('IlrDateEstimatorComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'Enter a valid visa approved date.'
     );
+  });
+
+  it('should render estimator form with single-column grid and end actions', () => {
+    const fixture = TestBed.createComponent(IlrDateEstimatorComponent);
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    const form = host.querySelector('form.editor');
+    const gridList = host.querySelector('mat-grid-list');
+    const tiles = host.querySelectorAll('mat-grid-tile');
+    const actions = host.querySelector('.actions');
+    const submitButton = actions?.querySelector('button[type="submit"]');
+
+    expect(form).not.toBeNull();
+    expect(gridList?.getAttribute('cols')).toBe('1');
+    expect(tiles.length).toBe(2);
+    expect(submitButton?.classList.contains('estimate-btn')).toBe(true);
   });
 
   it('should publish calculated estimate to shared ILR state', () => {

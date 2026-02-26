@@ -58,6 +58,30 @@
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
+.timing-grid {
+  grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.2fr);
+  grid-template-areas:
+    'estimator travel-log'
+    'estimator absence-summary';
+  align-items: start;
+}
+
+.timing-grid > * {
+  min-width: 0;
+}
+
+.timing-estimator {
+  grid-area: estimator;
+}
+
+.timing-travel-log {
+  grid-area: travel-log;
+}
+
+.timing-absence-summary {
+  grid-area: absence-summary;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -77,5 +101,13 @@
   .screen-grid {
     padding: 0.75rem;
     grid-template-columns: 1fr;
+  }
+
+  .timing-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'estimator'
+      'travel-log'
+      'absence-summary';
   }
 }

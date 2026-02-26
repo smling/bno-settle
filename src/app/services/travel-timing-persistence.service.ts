@@ -12,6 +12,7 @@ interface IndexedDbEntry {
 export interface PersistedTravelTimingState {
   records: TravelRecord[];
   visaApprovedDate: string;
+  arrivedUkDate: string;
   estimate: IlrTimelineEstimate | null;
 }
 
@@ -146,11 +147,16 @@ export class TravelTimingPersistenceService {
     }
     const recordsValue = value['records'];
     const visaApprovedDate = value['visaApprovedDate'];
+    const arrivedUkDateValue = value['arrivedUkDate'];
     const estimateValue = value['estimate'];
     if (!Array.isArray(recordsValue) || typeof visaApprovedDate !== 'string') {
       return null;
     }
+    const arrivedUkDate = typeof arrivedUkDateValue === 'string' ? arrivedUkDateValue : '';
     if (!isIsoDate(visaApprovedDate) && visaApprovedDate !== '') {
+      return null;
+    }
+    if (!isIsoDate(arrivedUkDate) && arrivedUkDate !== '') {
       return null;
     }
 
@@ -171,6 +177,7 @@ export class TravelTimingPersistenceService {
     return {
       records: parsedRecords,
       visaApprovedDate,
+      arrivedUkDate,
       estimate: parsedEstimate
     };
   }
@@ -179,6 +186,7 @@ export class TravelTimingPersistenceService {
     return {
       records: state.records.map((record) => ({ ...record })),
       visaApprovedDate: state.visaApprovedDate,
+      arrivedUkDate: state.arrivedUkDate,
       estimate: state.estimate ? { ...state.estimate } : null
     };
   }
@@ -232,6 +240,7 @@ function parseIlrTimelineEstimate(value: unknown): IlrTimelineEstimate | null {
   const visaApprovedDate = value['visaApprovedDate'];
   const visaExpiryDate = value['visaExpiryDate'];
   const earliestIlrApplyDate = value['earliestIlrApplyDate'];
+  const arrivedUkDate = value['arrivedUkDate'];
 
   if (
     !isIsoDate(visaApprovedDate) ||
@@ -244,7 +253,8 @@ function parseIlrTimelineEstimate(value: unknown): IlrTimelineEstimate | null {
   return {
     visaApprovedDate,
     visaExpiryDate,
-    earliestIlrApplyDate
+    earliestIlrApplyDate,
+    ...(isIsoDate(arrivedUkDate) ? { arrivedUkDate } : {})
   };
 }
 

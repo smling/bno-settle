@@ -12,7 +12,7 @@ describe('AbsenceSummaryScreenComponent', () => {
     }).compileComponents();
   });
 
-  it('should compose metrics and chart subcomponents', async () => {
+  it('should compose summary table and chart subcomponents', async () => {
     const state = TestBed.inject(IlrEstimateStateService);
     state.setEstimate('2024-03-01', {
       visaApprovedDate: '2024-03-01',
@@ -24,7 +24,7 @@ describe('AbsenceSummaryScreenComponent', () => {
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('app-absence-summary-metrics')).toBeTruthy();
+    expect(compiled.querySelector('table.value-table')).toBeTruthy();
     expect(compiled.querySelector('app-rolling-peaks-chart')).toBeTruthy();
     expect(compiled.textContent).toContain('Rolling peak details');
   });
@@ -55,6 +55,46 @@ describe('AbsenceSummaryScreenComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'Calculate ILR dates first. This summary uses visa approved date and visa expiry date.'
     );
+  });
+
+  it('should highlight rolling 12-month threshold breaches in rolling peak log', async () => {
+    const state = TestBed.inject(IlrEstimateStateService);
+    state.setEstimate('2024-03-01', {
+      visaApprovedDate: '2024-03-01',
+      visaExpiryDate: '2029-03-01',
+      earliestIlrApplyDate: '2029-02-01'
+    });
+
+    const absenceFixture = TestBed.createComponent(AbsenceSummaryScreenComponent);
+    absenceFixture.detectChanges();
+    await absenceFixture.whenStable();
+
+    const travelFixture = TestBed.createComponent(TravelLogScreenComponent);
+    const travelComponent = travelFixture.componentInstance as unknown as {
+      form: {
+        departDate: string;
+        returnDate: string;
+        destinationCountryCode: string;
+        tag: 'holiday' | 'work' | 'family' | 'other' | '';
+      };
+      saveRecord: () => void;
+    };
+
+    travelComponent.form = {
+      departDate: '2025-01-01',
+      returnDate: '2025-07-01',
+      destinationCountryCode: 'US',
+      tag: 'holiday'
+    };
+    travelComponent.saveRecord();
+
+    absenceFixture.detectChanges();
+    await absenceFixture.whenStable();
+
+    const host = absenceFixture.nativeElement as HTMLElement;
+    expect(host.textContent).toContain('Warning: rolling 12-month absences exceed 180 days');
+    expect(host.textContent).toContain('Over limit');
+    expect(host.querySelectorAll('tr.threshold-exceeded-row').length).toBeGreaterThan(0);
   });
 
   it('should recompute summary when travel-log records change', async () => {

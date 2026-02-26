@@ -18,10 +18,16 @@
       </section>
     </mat-tab>
     <mat-tab [label]="i18n.t('app.tab.travelTiming')">
-      <section class="screen-grid">
-        <app-ilr-date-estimator [travelTimingContext]="travelTimingContext" />
-        <app-travel-log-screen [travelTimingContext]="travelTimingContext" />
-        <app-absence-summary-screen [travelTimingContext]="travelTimingContext" />
+      <section class="screen-grid timing-grid">
+        <div class="timing-estimator">
+          <app-ilr-date-estimator [travelTimingContext]="travelTimingContext" />
+        </div>
+        <div class="timing-travel-log">
+          <app-travel-log-screen [travelTimingContext]="travelTimingContext" />
+        </div>
+        <div class="timing-absence-summary">
+          <app-absence-summary-screen [travelTimingContext]="travelTimingContext" />
+        </div>
         <!-- <app-timeline-screen /> -->
       </section>
     </mat-tab>

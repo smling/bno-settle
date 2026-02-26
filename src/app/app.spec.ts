@@ -56,4 +56,24 @@ describe('App', () => {
     await fixture.whenStable();
     expect(compiled.textContent).toContain('Absence Summary');
   });
+
+  it('should render timing grid with estimator left, travel top-right, and absence bottom-right slots', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const tabs = Array.from(compiled.querySelectorAll<HTMLElement>('[role="tab"]'));
+    tabs[1].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const timingGrid = compiled.querySelector('section.timing-grid');
+    expect(timingGrid).not.toBeNull();
+    expect(timingGrid?.querySelector('.timing-estimator app-ilr-date-estimator')).not.toBeNull();
+    expect(timingGrid?.querySelector('.timing-travel-log app-travel-log-screen')).not.toBeNull();
+    expect(
+      timingGrid?.querySelector('.timing-absence-summary app-absence-summary-screen')
+    ).not.toBeNull();
+  });
 });

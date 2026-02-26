@@ -3,10 +3,10 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { I18nService } from '../../i18n/i18n.service';
 import { TravelTimingContext } from '../../models/travel-timing-context.model';
 import { ComputedAbsenceSummary, TravelRecord } from '../../models/spec.models';
+import { ILR_MAX_ABSENCE_ROLLING_12M } from '../../policy/thresholds';
 import { IlrEstimateStateService } from '../../services/ilr-estimate-state.service';
 import { TravelLogStateService } from '../../services/travel-log-state.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
-import { AbsenceSummaryMetricsComponent } from './absence-summary-metrics.component';
 import { RollingPeaksChartComponent } from './rolling-peaks-chart.component';
 
 interface YearlyAbsenceRow {
@@ -36,7 +36,6 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
   standalone: true,
   imports: [
     SectionCardComponent,
-    AbsenceSummaryMetricsComponent,
     RollingPeaksChartComponent,
     MatExpansionModule
   ],
@@ -48,7 +47,32 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
         <p class="hint">
           {{ i18n.t('absenceSummary.usingRecords', { start: visaApprovedDate, end: visaExpiryDate }) }}
         </p>
-        <app-absence-summary-metrics [summary]="summary" />
+
+        <div class="table-wrap">
+          <table class="value-table">
+            <thead>
+              <tr>
+                <th>{{ i18n.t('absenceSummary.table.metric') }}</th>
+                <th>{{ i18n.t('absenceSummary.table.value') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{ i18n.t('absenceSummary.metric.last12Months') }}</td>
+                <td>{{ summary.daysOutsideLast12Months }}</td>
+              </tr>
+              <tr>
+                <td>{{ i18n.t('absenceSummary.metric.maxRolling12Months') }}</td>
+                <td>{{ summary.maxDaysOutsideInAnyRolling12Months }}</td>
+              </tr>
+              <tr>
+                <td>{{ i18n.t('absenceSummary.metric.last5Years') }}</td>
+                <td>{{ summary.daysOutsideLast5YearsTotal }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <app-rolling-peaks-chart [yearlyData]="yearlyBreakdown" />
 
         <mat-accordion>
@@ -56,21 +80,47 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
             <mat-expansion-panel-header>
               <mat-panel-title>{{ i18n.t('absenceSummary.panel.rollingPeak') }}</mat-panel-title>
             </mat-expansion-panel-header>
-            <ul>
-              @for (peak of summary.rolling12MonthPeaks; track peak.start + peak.end) {
-                <li>
+            @if (summary.rolling12MonthPeaks.length > 0) {
+              @if (hasRolling12MonthLimitExceeded) {
+                <p class="threshold-alert">
                   {{
-                    i18n.t('absenceSummary.rollingPeakItem', {
-                      start: peak.start,
-                      end: peak.end,
-                      days: peak.daysOutside
+                    i18n.t('absenceSummary.rollingPeakExceeded', {
+                      limit: rolling12MonthLimit,
+                      max: summary.maxDaysOutsideInAnyRolling12Months
                     })
                   }}
-                </li>
-              } @empty {
-                <li>{{ i18n.t('absenceSummary.rollingPeakEmpty') }}</li>
+                </p>
               }
-            </ul>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{{ i18n.t('absenceSummary.table.start') }}</th>
+                      <th>{{ i18n.t('absenceSummary.table.end') }}</th>
+                      <th>{{ i18n.t('absenceSummary.table.daysOutside') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (peak of summary.rolling12MonthPeaks; track peak.start + peak.end) {
+                      <tr [class.threshold-exceeded-row]="isRolling12MonthLimitExceeded(peak.daysOutside)">
+                        <td>{{ peak.start }}</td>
+                        <td>{{ peak.end }}</td>
+                        <td [class.threshold-exceeded-value]="isRolling12MonthLimitExceeded(peak.daysOutside)">
+                          {{ peak.daysOutside }}
+                          @if (isRolling12MonthLimitExceeded(peak.daysOutside)) {
+                            <span class="threshold-tag">
+                              {{ i18n.t('absenceSummary.thresholdExceededTag') }}
+                            </span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p>{{ i18n.t('absenceSummary.rollingPeakEmpty') }}</p>
+            }
           </mat-expansion-panel>
 
           <mat-expansion-panel>
@@ -103,13 +153,28 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
             <mat-expansion-panel-header>
               <mat-panel-title>{{ i18n.t('absenceSummary.panel.country') }}</mat-panel-title>
             </mat-expansion-panel-header>
-            <ul>
-              @for (country of countryTotalsLast12Months; track country.code) {
-                <li>{{ i18n.t('absenceSummary.countryItem', { code: country.code, days: country.days }) }}</li>
-              } @empty {
-                <li>{{ i18n.t('absenceSummary.countryEmpty') }}</li>
-              }
-            </ul>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{{ i18n.t('travelLog.table.country') }}</th>
+                    <th>{{ i18n.t('absenceSummary.table.daysOutside') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (country of countryTotalsLast12Months; track country.code) {
+                    <tr>
+                      <td>{{ country.code }}</td>
+                      <td>{{ country.days }}</td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="2">{{ i18n.t('absenceSummary.countryEmpty') }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
           </mat-expansion-panel>
         </mat-accordion>
       }
@@ -123,16 +188,12 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
         font-size: 0.86rem;
       }
 
-      ul {
-        margin: 0.2rem 0 0;
-        padding-left: 1.1rem;
-      }
-
       .table-wrap {
         overflow-x: auto;
       }
 
-      table {
+      table,
+      .value-table {
         width: 100%;
         border-collapse: collapse;
         min-width: 320px;
@@ -144,11 +205,38 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
         border-bottom: 1px solid #d7e3ea;
         padding: 0.35rem 0.25rem;
       }
+
+      .threshold-alert {
+        margin: 0 0 0.4rem;
+        border-left: 4px solid #a13f1d;
+        background: #fff3eb;
+        color: #7f2f16;
+        padding: 0.45rem 0.55rem;
+        border-radius: 6px;
+        font-size: 0.84rem;
+      }
+
+      .threshold-exceeded-row {
+        background: #fff7f2;
+      }
+
+      .threshold-exceeded-value {
+        color: #7f2f16;
+        font-weight: 600;
+      }
+
+      .threshold-tag {
+        margin-left: 0.35rem;
+        font-size: 0.73rem;
+        font-weight: 600;
+        color: #8a260f;
+      }
     `
   ]
 })
 export class AbsenceSummaryScreenComponent {
   protected readonly i18n = inject(I18nService);
+  protected readonly rolling12MonthLimit = ILR_MAX_ABSENCE_ROLLING_12M;
   private readonly travelTimingContextState = signal<TravelTimingContext | null>(null);
 
   @Input() public set travelTimingContext(value: TravelTimingContext | null) {
@@ -202,6 +290,14 @@ export class AbsenceSummaryScreenComponent {
 
   protected get showMissingEstimate(): boolean {
     return this.viewModel().showMissingEstimate;
+  }
+
+  protected get hasRolling12MonthLimitExceeded(): boolean {
+    return this.summary.maxDaysOutsideInAnyRolling12Months > this.rolling12MonthLimit;
+  }
+
+  protected isRolling12MonthLimitExceeded(daysOutside: number): boolean {
+    return daysOutside > this.rolling12MonthLimit;
   }
 
   private computeViewModel(

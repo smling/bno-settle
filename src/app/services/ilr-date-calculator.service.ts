@@ -5,6 +5,7 @@ export interface IlrTimelineEstimate {
   visaApprovedDate: string;
   visaExpiryDate: string;
   earliestIlrApplyDate: string;
+  arrivedUkDate?: string;
 }
 
 @Injectable({
