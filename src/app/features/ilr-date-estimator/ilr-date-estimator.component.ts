@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { I18nService } from '../../i18n/i18n.service';
@@ -21,7 +21,7 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
         <app-date-input
           [label]="i18n.t('ilrEstimator.visaApprovedDateLabel')"
           [value]="visaApprovedDate"
-          (valueChange)="visaApprovedDate = $event"
+          (valueChange)="onVisaApprovedDateChange($event)"
           [required]="true"
         />
 
@@ -104,9 +104,16 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
     `
   ]
 })
-export class IlrDateEstimatorComponent implements OnInit, OnChanges {
+export class IlrDateEstimatorComponent implements OnInit {
   protected readonly i18n = inject(I18nService);
-  @Input() public travelTimingContext: TravelTimingContext | null = null;
+  private readonly travelTimingContextState = signal<TravelTimingContext | null>(null);
+  @Input() public set travelTimingContext(value: TravelTimingContext | null) {
+    this.travelTimingContextState.set(value);
+  }
+
+  public get travelTimingContext(): TravelTimingContext | null {
+    return this.travelTimingContextState();
+  }
 
   public visaApprovedDate = '';
   public estimate: IlrTimelineEstimate | null = null;
@@ -115,16 +122,20 @@ export class IlrDateEstimatorComponent implements OnInit, OnChanges {
   constructor(
     private readonly ilrDateCalculatorService: IlrDateCalculatorService,
     private readonly ilrEstimateStateService: IlrEstimateStateService
-  ) {}
+  ) {
+    effect(() => {
+      const context = this.travelTimingContextState();
+      if (!context) {
+        return;
+      }
+      this.visaApprovedDate = context.visaApprovedDate();
+      this.estimate = context.estimate();
+      this.showError = this.visaApprovedDate !== '' && this.estimate === null;
+    });
+  }
 
   public ngOnInit(): void {
     this.syncFromState();
-  }
-
-  public ngOnChanges(changes: SimpleChanges): void {
-    if (changes['travelTimingContext']) {
-      this.syncFromState();
-    }
   }
 
   public calculate(): void {
@@ -135,6 +146,19 @@ export class IlrDateEstimatorComponent implements OnInit, OnChanges {
       this.travelTimingContext.estimate.set(this.estimate);
     }
     this.ilrEstimateStateService.setEstimate(this.visaApprovedDate, this.estimate);
+  }
+
+  protected onVisaApprovedDateChange(value: string): void {
+    this.visaApprovedDate = value;
+    const nextEstimate =
+      this.estimate !== null && this.estimate.visaApprovedDate === value ? this.estimate : null;
+    this.estimate = nextEstimate;
+    this.showError = false;
+    if (this.travelTimingContext) {
+      this.travelTimingContext.visaApprovedDate.set(value);
+      this.travelTimingContext.estimate.set(nextEstimate);
+    }
+    this.ilrEstimateStateService.setEstimate(value, nextEstimate);
   }
 
   private syncFromState(): void {

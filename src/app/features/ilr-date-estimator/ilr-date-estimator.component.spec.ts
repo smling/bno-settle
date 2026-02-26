@@ -66,4 +66,17 @@ describe('IlrDateEstimatorComponent', () => {
     expect(state.visaApprovedDate()).toBe('2024-03-01');
     expect(state.estimate()?.visaExpiryDate).toBe('2029-03-01');
   });
+
+  it('should publish visa approved date changes before calculate', () => {
+    const state = TestBed.inject(IlrEstimateStateService);
+    const fixture = TestBed.createComponent(IlrDateEstimatorComponent);
+    const component = fixture.componentInstance as unknown as {
+      onVisaApprovedDateChange: (value: string) => void;
+    };
+
+    component.onVisaApprovedDateChange('2024-04-15');
+
+    expect(state.visaApprovedDate()).toBe('2024-04-15');
+    expect(state.estimate()).toBeNull();
+  });
 });

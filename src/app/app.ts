@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { AbsenceSummaryScreenComponent } from './features/absence-summary/absence-summary-screen.component';
 import { ChecklistsScreenComponent } from './features/checklists/checklists-screen.component';
@@ -14,7 +14,10 @@ import { I18nService } from './i18n/i18n.service';
 
 import { DisclaimerBannerComponent } from './shared/disclaimer-banner/disclaimer-banner.component';
 import { TravelTimingContext } from './models/travel-timing-context.model';
-
+import {
+  PersistedTravelTimingState,
+  TravelTimingPersistenceService
+} from './services/travel-timing-persistence.service';
 
 @Component({
   selector: 'app-root',
@@ -37,5 +40,48 @@ import { TravelTimingContext } from './models/travel-timing-context.model';
 })
 export class App {
   protected readonly i18n = inject(I18nService);
-  protected readonly travelTimingContext = new TravelTimingContext(SEED_TRAVEL_RECORDS);
+  private readonly travelTimingPersistenceService = inject(TravelTimingPersistenceService);
+  private readonly hasHydratedTravelTimingState = signal(false);
+  protected readonly travelTimingContext = new TravelTimingContext(
+    SEED_TRAVEL_RECORDS.map((record) => ({ ...record }))
+  );
+
+  constructor() {
+    void this.hydrateTravelTimingState();
+
+    effect(() => {
+      if (!this.hasHydratedTravelTimingState()) {
+        return;
+      }
+      const state: PersistedTravelTimingState = {
+        records: this.travelTimingContext.records().map((record) => ({ ...record })),
+        visaApprovedDate: this.travelTimingContext.visaApprovedDate(),
+        estimate: this.cloneEstimate(this.travelTimingContext.estimate())
+      };
+      void this.travelTimingPersistenceService.saveTravelTimingState(state);
+    });
+  }
+
+  private async hydrateTravelTimingState(): Promise<void> {
+    try {
+      const persisted = await this.travelTimingPersistenceService.loadTravelTimingState();
+      if (!persisted) {
+        return;
+      }
+      this.travelTimingContext.records.set(persisted.records.map((record) => ({ ...record })));
+      this.travelTimingContext.visaApprovedDate.set(persisted.visaApprovedDate);
+      this.travelTimingContext.estimate.set(this.cloneEstimate(persisted.estimate));
+    } finally {
+      this.hasHydratedTravelTimingState.set(true);
+    }
+  }
+
+  private cloneEstimate(
+    estimate: PersistedTravelTimingState['estimate']
+  ): PersistedTravelTimingState['estimate'] {
+    if (!estimate) {
+      return null;
+    }
+    return { ...estimate };
+  }
 }
