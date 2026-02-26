@@ -1,0 +1,211 @@
+name: CI
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Unit Tests + Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests with coverage
+        run: |
+          mkdir -p reports/unit-tests
+          set -o pipefail
+          npm run test -- --watch=false 2>&1 | tee reports/unit-tests/test-output.log
+
+      - name: Capture coverage metadata
+        if: always()
+        run: |
+          mkdir -p reports/unit-tests
+          {
+            echo "run_id=${{ github.run_id }}"
+            echo "run_attempt=${{ github.run_attempt }}"
+            echo "sha=${{ github.sha }}"
+            echo "ref=${{ github.ref }}"
+          } > reports/unit-tests/metadata.txt
+
+      - name: Upload unit test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-tests-and-coverage-${{ github.run_id }}
+          path: |
+            reports/unit-tests
+            coverage
+          if-no-files-found: warn
+          retention-days: 90
+
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Run npm audit (JSON)
+        run: |
+          mkdir -p reports/dependency
+          set +e
+          npm audit --package-lock-only --json > reports/dependency/npm-audit.json
+          audit_exit=$?
+          set -e
+
+          node <<'NODE'
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('reports/dependency/npm-audit.json', 'utf8'));
+          const vulns = report.metadata?.vulnerabilities ?? {};
+          const summary = [
+            'run_id=' + (process.env.GITHUB_RUN_ID ?? ''),
+            'run_attempt=' + (process.env.GITHUB_RUN_ATTEMPT ?? ''),
+            'sha=' + (process.env.GITHUB_SHA ?? ''),
+            'ref=' + (process.env.GITHUB_REF ?? ''),
+            'total=' + (vulns.total ?? 0),
+            'critical=' + (vulns.critical ?? 0),
+            'high=' + (vulns.high ?? 0),
+            'moderate=' + (vulns.moderate ?? 0),
+            'low=' + (vulns.low ?? 0),
+            'info=' + (vulns.info ?? 0)
+          ].join('\n');
+          fs.writeFileSync('reports/dependency/summary.txt', summary + '\n');
+          NODE
+
+          if [ "$audit_exit" -ne 0 ]; then
+            echo "Dependency audit found vulnerabilities."
+            exit "$audit_exit"
+          fi
+
+      - name: Upload dependency audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-${{ github.run_id }}
+          path: reports/dependency
+          if-no-files-found: error
+          retention-days: 90
+
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Semgrep
+        run: |
+          python -m pip install --upgrade pip
+          pip install semgrep
+
+      - name: Run Semgrep scan
+        run: |
+          mkdir -p reports/sast
+          semgrep scan --config auto --error --sarif --sarif-output=reports/sast/semgrep.sarif --json-output=reports/sast/semgrep.json .
+
+      - name: Upload Semgrep SARIF to Code Scanning
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: reports/sast/semgrep.sarif
+          category: semgrep
+
+      - name: Write SAST metadata
+        if: always()
+        run: |
+          {
+            echo "run_id=${{ github.run_id }}"
+            echo "run_attempt=${{ github.run_attempt }}"
+            echo "sha=${{ github.sha }}"
+            echo "ref=${{ github.ref }}"
+            echo "status=${{ job.status }}"
+          } > reports/sast/metadata.txt
+
+      - name: Upload SAST reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-semgrep-${{ github.run_id }}
+          path: reports/sast
+          if-no-files-found: error
+          retention-days: 90
+
+  sensitive-data-scan:
+    name: Sensitive Data Scan (Gitleaks)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+          GITLEAKS_ENABLE_SUMMARY: true
+
+      - name: Collect sensitive scan reports
+        if: always()
+        run: |
+          mkdir -p reports/secrets
+          {
+            echo "run_id=${{ github.run_id }}"
+            echo "run_attempt=${{ github.run_attempt }}"
+            echo "sha=${{ github.sha }}"
+            echo "ref=${{ github.ref }}"
+            echo "status=${{ job.status }}"
+          } > reports/secrets/metadata.txt
+
+          if [ -f results.sarif ]; then
+            cp results.sarif reports/secrets/gitleaks.sarif
+          fi
+
+      - name: Upload sensitive data scan reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sensitive-data-scan-${{ github.run_id }}
+          path: reports/secrets
+          if-no-files-found: error
+          retention-days: 90
