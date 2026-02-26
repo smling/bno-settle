@@ -1,12 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 
 @Component({
   selector: 'app-disclaimer-banner',
   standalone: true,
   template: `
-    <aside class="disclaimer" aria-label="Legal disclaimer">
-      <strong>General information only - not legal advice.</strong>
-      <span>Rules change. Verify with official GOV.UK sources. Complex cases may need regulated professional advice.</span>
+    <aside class="disclaimer" [attr.aria-label]="i18n.t('disclaimer.aria')">
+      <strong>{{ i18n.t('disclaimer.title') }}</strong>
+      <span>{{ i18n.t('disclaimer.body') }}</span>
     </aside>
   `,
   styles: [
@@ -33,4 +34,6 @@ import { Component } from '@angular/core';
     `
   ]
 })
-export class DisclaimerBannerComponent {}
+export class DisclaimerBannerComponent {
+  protected readonly i18n = inject(I18nService);
+}

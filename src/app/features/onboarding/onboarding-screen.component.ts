@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
 
 @Component({
@@ -7,13 +8,13 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
   imports: [SectionCardComponent],
   template: `
     <app-section-card
-      title="Onboarding"
-      subtitle="Privacy notice, scope limits, and local-only processing summary."
+      [title]="i18n.t('onboarding.title')"
+      [subtitle]="i18n.t('onboarding.subtitle')"
     >
       <ul>
-        <li>No account, no sync, no server-side storage.</li>
-        <li>Travel data remains on-device and should be encrypted at rest.</li>
-        <li>Outputs are non-binding guidance labels only.</li>
+        <li>{{ i18n.t('onboarding.item.noAccount') }}</li>
+        <li>{{ i18n.t('onboarding.item.localData') }}</li>
+        <li>{{ i18n.t('onboarding.item.guidance') }}</li>
       </ul>
     </app-section-card>
   `,
@@ -31,4 +32,6 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
     `
   ]
 })
-export class OnboardingScreenComponent {}
+export class OnboardingScreenComponent {
+  protected readonly i18n = inject(I18nService);
+}

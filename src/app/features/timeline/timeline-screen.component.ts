@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
 
 @Component({
@@ -6,12 +7,12 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
   standalone: true,
   imports: [SectionCardComponent],
   template: `
-    <app-section-card title="Timeline" subtitle="Month-based milestones with optional day details.">
+    <app-section-card [title]="i18n.t('timeline.title')" [subtitle]="i18n.t('timeline.subtitle')">
       <ol>
-        @for (milestone of milestones; track milestone.label) {
+        @for (milestone of milestones; track milestone.labelKey) {
           <li>
-            <strong>{{ milestone.label }}:</strong>
-            {{ milestone.window }}
+            <strong>{{ i18n.t(milestone.labelKey) }}:</strong>
+            {{ i18n.t(milestone.windowKey) }}
           </li>
         }
       </ol>
@@ -32,9 +33,20 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
   ]
 })
 export class TimelineScreenComponent {
+  protected readonly i18n = inject(I18nService);
+
   protected readonly milestones = [
-    { label: 'BN(O) residence year 5', window: '2028-02 (ILR planning starts)' },
-    { label: 'Earliest ILR submission', window: 'Up to ~28 days before full 60 months' },
-    { label: 'Citizenship window', window: '12+ months after ILR unless spouse route applies' }
+    {
+      labelKey: 'timeline.milestone.residenceYear5.label',
+      windowKey: 'timeline.milestone.residenceYear5.window'
+    },
+    {
+      labelKey: 'timeline.milestone.ilrSubmission.label',
+      windowKey: 'timeline.milestone.ilrSubmission.window'
+    },
+    {
+      labelKey: 'timeline.milestone.citizenshipWindow.label',
+      windowKey: 'timeline.milestone.citizenshipWindow.window'
+    }
   ];
 }

@@ -1,23 +1,23 @@
 <main class="app-layout">
   <header class="hero">
-    <p class="kicker">BN(O) helper</p>
-    <h1>{{ title() }}</h1>
+    <p class="kicker">{{ i18n.t('app.kicker') }}</p>
+    <h1>{{ i18n.t('app.title') }}</h1>
     <p class="subtitle">
-      Private-first Checklist for BNO-er appling ILR and citizenship;
+      {{ i18n.t('app.subtitle') }}
     </p>
   </header>
 
   <app-disclaimer-banner />
 
   <mat-tab-group class="workspace-tabs" dynamicHeight>
-    <mat-tab label="Assessment">
+    <mat-tab [label]="i18n.t('app.tab.assessment')">
       <section class="screen-grid">
         <!-- <app-onboarding-screen /> -->
         <app-quick-check-screen />
         <app-risk-flags-screen />
       </section>
     </mat-tab>
-    <mat-tab label="Travel and Timing">
+    <mat-tab [label]="i18n.t('app.tab.travelTiming')">
       <section class="screen-grid">
         <app-ilr-date-estimator [travelTimingContext]="travelTimingContext" />
         <app-travel-log-screen [travelTimingContext]="travelTimingContext" />
@@ -25,13 +25,13 @@
         <!-- <app-timeline-screen /> -->
       </section>
     </mat-tab>
-    <mat-tab label="Docs and Guidance">
+    <mat-tab [label]="i18n.t('app.tab.docsGuidance')">
       <section class="screen-grid">
         <app-checklists-screen />
         <app-official-references-screen />
       </section>
     </mat-tab>
-    <mat-tab label="Privacy and Settings">
+    <mat-tab [label]="i18n.t('app.tab.privacySettings')">
       <section class="screen-grid">
         <app-settings-screen />
         <app-privacy-debug-screen />

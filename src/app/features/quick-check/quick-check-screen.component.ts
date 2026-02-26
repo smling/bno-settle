@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { QuickCheckInput } from '../../models/spec.models';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
 import { StatusBadgeComponent } from '../../shared/status-badge/status-badge.component';
@@ -9,34 +10,34 @@ import { evaluateQuickCheck } from './quick-check-evaluator';
   standalone: true,
   imports: [SectionCardComponent, StatusBadgeComponent],
   template: `
-    <app-section-card title="Quick Check" subtitle="ILR and citizenship readiness guidance (non-binding).">
+    <app-section-card [title]="i18n.t('quickCheck.title')" [subtitle]="i18n.t('quickCheck.subtitle')">
       <div class="status-row">
-        <strong>ILR:</strong>
+        <strong>{{ i18n.t('quickCheck.ilr') }}</strong>
         <app-status-badge [label]="assessment.ilr.status" />
       </div>
       @if (assessment.ilr.reasons.length > 0) {
         <ul>
-          @for (reason of assessment.ilr.reasons; track reason) {
-            <li>{{ reason }}</li>
+          @for (reason of assessment.ilr.reasons; track reason.key) {
+            <li>{{ i18n.t(reason.key, reason.params ?? {}) }}</li>
           }
         </ul>
       }
 
       <div class="status-row">
-        <strong>Citizenship:</strong>
+        <strong>{{ i18n.t('quickCheck.citizenship') }}</strong>
         <app-status-badge [label]="assessment.citizenship.status" />
       </div>
       @if (assessment.citizenship.reasons.length > 0) {
         <ul>
-          @for (reason of assessment.citizenship.reasons; track reason) {
-            <li>{{ reason }}</li>
+          @for (reason of assessment.citizenship.reasons; track reason.key) {
+            <li>{{ i18n.t(reason.key, reason.params ?? {}) }}</li>
           }
         </ul>
       }
 
       @if (assessment.ilr.missingChecklist.length > 0) {
         <p class="hint">
-          Missing checklist items: {{ assessment.ilr.missingChecklist.join(', ') }}
+          {{ i18n.t('quickCheck.missingChecklist', { items: missingChecklistSummary() }) }}
         </p>
       }
     </app-section-card>
@@ -64,6 +65,8 @@ import { evaluateQuickCheck } from './quick-check-evaluator';
   ]
 })
 export class QuickCheckScreenComponent {
+  protected readonly i18n = inject(I18nService);
+
   private readonly sampleInput: QuickCheckInput = {
     state: {
       monthsInUK: 59,
@@ -83,4 +86,10 @@ export class QuickCheckScreenComponent {
   };
 
   protected readonly assessment = evaluateQuickCheck(this.sampleInput);
+
+  protected missingChecklistSummary(): string {
+    return this.assessment.ilr.missingChecklist
+      .map((item) => this.i18n.t(item.key, item.params ?? {}))
+      .join(', ');
+  }
 }

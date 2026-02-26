@@ -1,6 +1,7 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { I18nService } from '../../i18n/i18n.service';
 import { TravelTimingContext } from '../../models/travel-timing-context.model';
 import { IlrDateCalculatorService, IlrTimelineEstimate } from '../../services/ilr-date-calculator.service';
 import { IlrEstimateStateService } from '../../services/ilr-estimate-state.service';
@@ -13,12 +14,12 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
   imports: [FormsModule, SectionCardComponent, DateInputComponent, MatButtonModule],
   template: `
     <app-section-card
-      title="ILR Date Estimator"
-      subtitle="Enter your visa approved date to estimate visa expiry and earliest ILR date."
+      [title]="i18n.t('ilrEstimator.title')"
+      [subtitle]="i18n.t('ilrEstimator.subtitle')"
     >
       <form class="calculator-form" (ngSubmit)="calculate()">
         <app-date-input
-          label="Visa approved date"
+          [label]="i18n.t('ilrEstimator.visaApprovedDateLabel')"
           [value]="visaApprovedDate"
           (valueChange)="visaApprovedDate = $event"
           [required]="true"
@@ -29,25 +30,31 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
           color="primary"
           type="submit"
           class="emoji-btn"
-          aria-label="Estimate ILR date"
-          title="Estimate ILR date"
+          [attr.aria-label]="i18n.t('ilrEstimator.estimateButton')"
+          [attr.title]="i18n.t('ilrEstimator.estimateButton')"
         >
           🧮
         </button>
       </form>
 
       @if (showError) {
-        <p class="error">Enter a valid visa approved date.</p>
+        <p class="error">{{ i18n.t('ilrEstimator.error.invalidVisaApprovedDate') }}</p>
       }
 
       @if (estimate) {
         <div class="result-grid">
-          <p><strong>Visa approved date:</strong> {{ estimate.visaApprovedDate }}</p>
-          <p><strong>Visa expiry date:</strong> {{ estimate.visaExpiryDate }}</p>
-          <p><strong>Earliest ILR apply date:</strong> {{ estimate.earliestIlrApplyDate }}</p>
+          <p>{{ i18n.t('ilrEstimator.result.visaApprovedDate', { date: estimate.visaApprovedDate }) }}</p>
+          <p>{{ i18n.t('ilrEstimator.result.visaExpiryDate', { date: estimate.visaExpiryDate }) }}</p>
+          <p>
+            {{
+              i18n.t('ilrEstimator.result.earliestIlrApplyDate', {
+                date: estimate.earliestIlrApplyDate
+              })
+            }}
+          </p>
         </div>
         <p class="assumption">
-          Assumption: 5-year visa duration and ILR submission up to 28 days before expiry.
+          {{ i18n.t('ilrEstimator.assumption') }}
         </p>
       }
     </app-section-card>
@@ -98,6 +105,7 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
   ]
 })
 export class IlrDateEstimatorComponent implements OnInit, OnChanges {
+  protected readonly i18n = inject(I18nService);
   @Input() public travelTimingContext: TravelTimingContext | null = null;
 
   public visaApprovedDate = '';

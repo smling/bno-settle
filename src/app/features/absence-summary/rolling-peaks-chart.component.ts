@@ -2,11 +2,13 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  inject,
   Input,
   OnChanges,
   ViewChild
 } from '@angular/core';
 import * as d3 from 'd3';
+import { I18nService } from '../../i18n/i18n.service';
 import { ILR_MAX_ABSENCE_ROLLING_12M } from '../../policy/thresholds';
 
 export interface YearlyAbsenceChartPoint {
@@ -19,7 +21,7 @@ export interface YearlyAbsenceChartPoint {
   standalone: true,
   template: `
     <figure class="chart-shell">
-      <svg #chart aria-label="Yearly absence chart"></svg>
+      <svg #chart [attr.aria-label]="i18n.t('rollingChart.ariaLabel')"></svg>
     </figure>
   `,
   styles: [
@@ -41,6 +43,7 @@ export interface YearlyAbsenceChartPoint {
   ]
 })
 export class RollingPeaksChartComponent implements AfterViewInit, OnChanges {
+  protected readonly i18n = inject(I18nService);
   @Input({ required: true }) yearlyData: YearlyAbsenceChartPoint[] = [];
   @Input() maxAllowedDays = ILR_MAX_ABSENCE_ROLLING_12M;
   @ViewChild('chart') private chartRef?: ElementRef<SVGSVGElement>;
@@ -100,7 +103,9 @@ export class RollingPeaksChartComponent implements AfterViewInit, OnChanges {
       .attr('height', (point) => y(0) - y(point.daysOutside))
       .attr('rx', 4);
 
-    bars.append('title').text((point) => `${point.year}: ${point.daysOutside} days outside UK`);
+    bars
+      .append('title')
+      .text((point) => this.i18n.t('rollingChart.barTitle', { year: point.year, days: point.daysOutside }));
 
     const thresholdY = y(this.maxAllowedDays);
     svg
@@ -121,7 +126,7 @@ export class RollingPeaksChartComponent implements AfterViewInit, OnChanges {
       .attr('text-anchor', 'end')
       .attr('fill', '#7f2f16')
       .attr('font-size', 11)
-      .text(`Allowed max: ${this.maxAllowedDays} days`);
+      .text(this.i18n.t('rollingChart.allowedMax', { days: this.maxAllowedDays }));
 
     svg
       .append('g')

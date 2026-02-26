@@ -1,5 +1,6 @@
-import { Component, computed, Input, signal } from '@angular/core';
+import { Component, computed, inject, Input, signal } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { I18nService } from '../../i18n/i18n.service';
 import { TravelTimingContext } from '../../models/travel-timing-context.model';
 import { ComputedAbsenceSummary, TravelRecord } from '../../models/spec.models';
 import { IlrEstimateStateService } from '../../services/ilr-estimate-state.service';
@@ -40,12 +41,12 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
     MatExpansionModule
   ],
   template: `
-    <app-section-card title="Absence Summary" subtitle="Derived totals and rolling window peaks.">
+    <app-section-card [title]="i18n.t('absenceSummary.title')" [subtitle]="i18n.t('absenceSummary.subtitle')">
       @if (showMissingEstimate) {
-        <p class="hint">Calculate ILR dates first. This summary uses visa approved date and visa expiry date.</p>
+        <p class="hint">{{ i18n.t('absenceSummary.missingEstimate') }}</p>
       } @else {
         <p class="hint">
-          Using travel log records from {{ visaApprovedDate }} to {{ visaExpiryDate }}.
+          {{ i18n.t('absenceSummary.usingRecords', { start: visaApprovedDate, end: visaExpiryDate }) }}
         </p>
         <app-absence-summary-metrics [summary]="summary" />
         <app-rolling-peaks-chart [yearlyData]="yearlyBreakdown" />
@@ -53,28 +54,36 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
         <mat-accordion>
           <mat-expansion-panel>
             <mat-expansion-panel-header>
-              <mat-panel-title>Rolling peak details</mat-panel-title>
+              <mat-panel-title>{{ i18n.t('absenceSummary.panel.rollingPeak') }}</mat-panel-title>
             </mat-expansion-panel-header>
             <ul>
               @for (peak of summary.rolling12MonthPeaks; track peak.start + peak.end) {
-                <li>{{ peak.start }} to {{ peak.end }}: {{ peak.daysOutside }} days outside</li>
+                <li>
+                  {{
+                    i18n.t('absenceSummary.rollingPeakItem', {
+                      start: peak.start,
+                      end: peak.end,
+                      days: peak.daysOutside
+                    })
+                  }}
+                </li>
               } @empty {
-                <li>No rolling-peak windows found in this period.</li>
+                <li>{{ i18n.t('absenceSummary.rollingPeakEmpty') }}</li>
               }
             </ul>
           </mat-expansion-panel>
 
           <mat-expansion-panel>
             <mat-expansion-panel-header>
-              <mat-panel-title>Yearly summary (visa period)</mat-panel-title>
+              <mat-panel-title>{{ i18n.t('absenceSummary.panel.yearly') }}</mat-panel-title>
             </mat-expansion-panel-header>
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Year</th>
-                    <th>Days outside UK</th>
-                    <th>Trip segments</th>
+                    <th>{{ i18n.t('absenceSummary.table.year') }}</th>
+                    <th>{{ i18n.t('absenceSummary.table.daysOutside') }}</th>
+                    <th>{{ i18n.t('absenceSummary.table.tripSegments') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -92,13 +101,13 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
           <mat-expansion-panel>
             <mat-expansion-panel-header>
-              <mat-panel-title>Country summary (last 12 months before visa expiry)</mat-panel-title>
+              <mat-panel-title>{{ i18n.t('absenceSummary.panel.country') }}</mat-panel-title>
             </mat-expansion-panel-header>
             <ul>
               @for (country of countryTotalsLast12Months; track country.code) {
-                <li>{{ country.code }}: {{ country.days }} days</li>
+                <li>{{ i18n.t('absenceSummary.countryItem', { code: country.code, days: country.days }) }}</li>
               } @empty {
-                <li>No absences in the last 12 months.</li>
+                <li>{{ i18n.t('absenceSummary.countryEmpty') }}</li>
               }
             </ul>
           </mat-expansion-panel>
@@ -139,6 +148,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
   ]
 })
 export class AbsenceSummaryScreenComponent {
+  protected readonly i18n = inject(I18nService);
   private readonly travelTimingContextState = signal<TravelTimingContext | null>(null);
 
   @Input() public set travelTimingContext(value: TravelTimingContext | null) {

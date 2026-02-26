@@ -2,6 +2,11 @@ export type ReadinessLabel = 'Likely ready' | 'Not yet' | 'Potential issue' | 'N
 
 export type RiskAnswer = 'yes' | 'no' | 'unsure';
 
+export interface LocalizedMessage {
+  key: string;
+  params?: Record<string, string | number>;
+}
+
 export interface TravelRecord {
   id: string;
   departDate: string;
@@ -37,8 +42,8 @@ export interface QuickCheckInput {
 
 export interface ReadinessAssessment {
   status: ReadinessLabel;
-  reasons: string[];
-  missingChecklist: string[];
+  reasons: LocalizedMessage[];
+  missingChecklist: LocalizedMessage[];
 }
 
 export interface QuickCheckAssessment {

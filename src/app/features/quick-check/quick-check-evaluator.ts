@@ -1,4 +1,5 @@
 import {
+  LocalizedMessage,
   QuickCheckAssessment,
   QuickCheckInput,
   ReadinessAssessment,
@@ -32,26 +33,34 @@ function createBaseAssessment(): ReadinessAssessment {
   };
 }
 
+function message(key: string, params?: Record<string, string | number>): LocalizedMessage {
+  return { key, params };
+}
+
 function evaluateIlr(input: QuickCheckInput): ReadinessAssessment {
   const result = createBaseAssessment();
   const { state, absence } = input;
 
   if (state.monthsInUK < ILR_REQUIRED_MONTHS) {
     result.status = escalateStatus(result.status, 'Not yet');
-    result.reasons.push(`Less than ${ILR_REQUIRED_MONTHS} months in UK.`);
+    result.reasons.push(
+      message('quickCheck.reason.ilr.lessThanMonths', { months: ILR_REQUIRED_MONTHS })
+    );
   }
 
   if (absence.maxDaysOutsideInAnyRolling12Months > ILR_MAX_ABSENCE_ROLLING_12M) {
     result.status = escalateStatus(result.status, 'Potential issue');
-    result.reasons.push(`Absences exceed ${ILR_MAX_ABSENCE_ROLLING_12M} days in a rolling 12-month window.`);
+    result.reasons.push(
+      message('quickCheck.reason.ilr.absenceExceeded', { days: ILR_MAX_ABSENCE_ROLLING_12M })
+    );
   }
 
   if (!state.lifeInUkPassed) {
-    result.missingChecklist.push('Life in the UK test');
+    result.missingChecklist.push(message('quickCheck.missing.lifeInUk'));
   }
 
   if (!state.englishB1MetOrExempt) {
-    result.missingChecklist.push('English B1 or exemption evidence');
+    result.missingChecklist.push(message('quickCheck.missing.englishB1'));
   }
 
   return result;
@@ -65,29 +74,35 @@ function evaluateCitizenship(input: QuickCheckInput): ReadinessAssessment {
 
   if (!state.ilrGranted) {
     result.status = escalateStatus(result.status, 'Not yet');
-    result.reasons.push('ILR not granted yet.');
+    result.reasons.push(message('quickCheck.reason.citizenship.ilrNotGranted'));
   }
 
   if (!state.marriedToBritishCitizen && state.monthsSinceILR < CITIZENSHIP_WAIT_MONTHS_AFTER_ILR) {
     result.status = escalateStatus(result.status, 'Not yet');
     result.reasons.push(
-      `Needs ${CITIZENSHIP_WAIT_MONTHS_AFTER_ILR} months after ILR unless married to a British citizen.`
+      message('quickCheck.reason.citizenship.waitAfterIlr', {
+        months: CITIZENSHIP_WAIT_MONTHS_AFTER_ILR
+      })
     );
   }
 
   if (absence.daysOutsideLast5YearsTotal >= abs5yWarningThreshold) {
     result.status = escalateStatus(result.status, 'Potential issue');
-    result.reasons.push(`5-year absences are approaching/exceeding ${CIT_MAX_ABSENCE_5Y} days.`);
+    result.reasons.push(
+      message('quickCheck.reason.citizenship.absence5y', { days: CIT_MAX_ABSENCE_5Y })
+    );
   }
 
   if (absence.daysOutsideLast12Months >= abs12mWarningThreshold) {
     result.status = escalateStatus(result.status, 'Potential issue');
-    result.reasons.push(`Last 12-month absences are approaching/exceeding ${CIT_MAX_ABSENCE_LAST_12M} days.`);
+    result.reasons.push(
+      message('quickCheck.reason.citizenship.absence12m', { days: CIT_MAX_ABSENCE_LAST_12M })
+    );
   }
 
   if (riskFlags.some((answer) => answer === 'yes' || answer === 'unsure')) {
     result.status = escalateStatus(result.status, 'Needs review');
-    result.reasons.push('At least one risk flag is yes/unsure.');
+    result.reasons.push(message('quickCheck.reason.citizenship.riskFlag'));
   }
 
   return result;

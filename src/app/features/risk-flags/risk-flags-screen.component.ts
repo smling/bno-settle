@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { RiskAnswer } from '../../models/spec.models';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
 
 interface RiskFlagItem {
   code: string;
-  prompt: string;
+  promptKey: string;
   answer: RiskAnswer;
 }
 
@@ -13,12 +14,12 @@ interface RiskFlagItem {
   standalone: true,
   imports: [SectionCardComponent],
   template: `
-    <app-section-card title="Risk Flags" subtitle="Yes / no / unsure prompts to highlight review cases.">
+    <app-section-card [title]="i18n.t('riskFlags.title')" [subtitle]="i18n.t('riskFlags.subtitle')">
       <ul>
         @for (item of items; track item.code) {
           <li>
-            <span>{{ item.prompt }}</span>
-            <strong [attr.data-answer]="item.answer">{{ item.answer }}</strong>
+            <span>{{ i18n.t(item.promptKey) }}</span>
+            <strong [attr.data-answer]="item.answer">{{ i18n.t(answerLabelKey(item.answer)) }}</strong>
           </li>
         }
       </ul>
@@ -61,9 +62,15 @@ interface RiskFlagItem {
   ]
 })
 export class RiskFlagsScreenComponent {
+  protected readonly i18n = inject(I18nService);
+
   protected readonly items: RiskFlagItem[] = [
-    { code: 'overstay', prompt: 'Any history of overstay or immigration breach?', answer: 'no' },
-    { code: 'conviction', prompt: 'Any criminal conviction to disclose?', answer: 'unsure' },
-    { code: 'misrep', prompt: 'Any previous refusal or discrepancy concerns?', answer: 'no' }
+    { code: 'overstay', promptKey: 'riskFlags.item.overstay', answer: 'no' },
+    { code: 'conviction', promptKey: 'riskFlags.item.conviction', answer: 'unsure' },
+    { code: 'misrep', promptKey: 'riskFlags.item.misrep', answer: 'no' }
   ];
+
+  protected answerLabelKey(answer: RiskAnswer): string {
+    return `riskAnswer.${answer}`;
+  }
 }

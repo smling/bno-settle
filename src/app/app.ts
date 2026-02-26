@@ -1,33 +1,32 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { AbsenceSummaryScreenComponent } from './features/absence-summary/absence-summary-screen.component';
 import { ChecklistsScreenComponent } from './features/checklists/checklists-screen.component';
 import { IlrDateEstimatorComponent } from './features/ilr-date-estimator/ilr-date-estimator.component';
 import { OfficialReferencesScreenComponent } from './features/official-references/official-references-screen.component';
-import { OnboardingScreenComponent } from './features/onboarding/onboarding-screen.component';
 import { PrivacyDebugScreenComponent } from './features/privacy-debug/privacy-debug-screen.component';
 import { QuickCheckScreenComponent } from './features/quick-check/quick-check-screen.component';
 import { RiskFlagsScreenComponent } from './features/risk-flags/risk-flags-screen.component';
 import { SettingsScreenComponent } from './features/settings/settings-screen.component';
-import { TimelineScreenComponent } from './features/timeline/timeline-screen.component';
 import { TravelLogScreenComponent } from './features/travel-log/travel-log-screen.component';
 import { SEED_TRAVEL_RECORDS } from './features/travel-log/travel-log-seed-records';
-import { TravelTimingContext } from './models/travel-timing-context.model';
+import { I18nService } from './i18n/i18n.service';
+
 import { DisclaimerBannerComponent } from './shared/disclaimer-banner/disclaimer-banner.component';
+import { TravelTimingContext } from './models/travel-timing-context.model';
 
 
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [
     MatTabsModule,
     DisclaimerBannerComponent,
-    OnboardingScreenComponent,
     IlrDateEstimatorComponent,
     QuickCheckScreenComponent,
     TravelLogScreenComponent,
     AbsenceSummaryScreenComponent,
     ChecklistsScreenComponent,
-    TimelineScreenComponent,
     RiskFlagsScreenComponent,
     OfficialReferencesScreenComponent,
     SettingsScreenComponent,
@@ -37,6 +36,6 @@ import { DisclaimerBannerComponent } from './shared/disclaimer-banner/disclaimer
   styleUrl: './app.css'
 })
 export class App {
-  protected readonly title = signal('BNO Settle');
+  protected readonly i18n = inject(I18nService);
   protected readonly travelTimingContext = new TravelTimingContext(SEED_TRAVEL_RECORDS);
 }

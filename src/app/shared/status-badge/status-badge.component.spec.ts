@@ -8,13 +8,13 @@ describe('StatusBadgeComponent', () => {
     }).compileComponents();
   });
 
-  it('renders label text and data-label attribute', () => {
+  it('renders localized label text and status attribute', () => {
     const fixture = TestBed.createComponent(StatusBadgeComponent);
     fixture.componentInstance.label = 'Potential issue';
     fixture.detectChanges();
 
     const badge = fixture.nativeElement.querySelector('.badge') as HTMLElement;
-    expect(badge.textContent?.trim()).toBe('Potential issue');
-    expect(badge.getAttribute('data-label')).toBe('Potential issue');
+    expect(badge.textContent?.trim()).toBe('⚠️ Potential issue');
+    expect(badge.getAttribute('data-status')).toBe('potential-issue');
   });
 });

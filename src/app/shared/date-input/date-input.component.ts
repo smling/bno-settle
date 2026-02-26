@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Injectable, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Injectable, Input, Output, inject } from '@angular/core';
 import { MatDateFormats, DateAdapter, MAT_DATE_FORMATS, NativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { I18nService } from '../../i18n/i18n.service';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const YMD_SEPARATOR_PATTERN = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/;
@@ -107,7 +108,7 @@ class IsoDateAdapter extends NativeDateAdapter {
         matInput
         [matDatepicker]="picker"
         [value]="rawInput"
-        placeholder="yyyy-mm-dd"
+        [placeholder]="i18n.t('dateInput.placeholder')"
         [required]="required"
         [disabled]="disabled"
         (input)="onRawInput($event)"
@@ -116,7 +117,7 @@ class IsoDateAdapter extends NativeDateAdapter {
       />
       <mat-datepicker-toggle matIconSuffix [for]="picker" />
       <mat-datepicker #picker />
-      <mat-hint>Format: yyyy-mm-dd</mat-hint>
+      <mat-hint>{{ i18n.t('dateInput.hint') }}</mat-hint>
     </mat-form-field>
   `,
   styles: [
@@ -132,6 +133,7 @@ class IsoDateAdapter extends NativeDateAdapter {
   ]
 })
 export class DateInputComponent {
+  protected readonly i18n = inject(I18nService);
   @Input({ required: true }) label!: string;
   @Input() required = false;
   @Input() disabled = false;

@@ -1,4 +1,5 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { ComputedAbsenceSummary } from '../../models/spec.models';
 
 @Component({
@@ -7,16 +8,13 @@ import { ComputedAbsenceSummary } from '../../models/spec.models';
   template: `
     <div class="metrics">
       <p>
-        <strong>Last 12 months:</strong>
-        {{ summary.daysOutsideLast12Months }} days outside UK
+        {{ i18n.t('absenceMetrics.last12Months', { days: summary.daysOutsideLast12Months }) }}
       </p>
       <p>
-        <strong>Max rolling 12 months:</strong>
-        {{ summary.maxDaysOutsideInAnyRolling12Months }} days
+        {{ i18n.t('absenceMetrics.maxRolling12Months', { days: summary.maxDaysOutsideInAnyRolling12Months }) }}
       </p>
       <p>
-        <strong>Last 5 years:</strong>
-        {{ summary.daysOutsideLast5YearsTotal }} days
+        {{ i18n.t('absenceMetrics.last5Years', { days: summary.daysOutsideLast5YearsTotal }) }}
       </p>
     </div>
   `,
@@ -41,5 +39,6 @@ import { ComputedAbsenceSummary } from '../../models/spec.models';
   ]
 })
 export class AbsenceSummaryMetricsComponent {
+  protected readonly i18n = inject(I18nService);
   @Input({ required: true }) summary!: ComputedAbsenceSummary;
 }

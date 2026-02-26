@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { I18nService } from '../../i18n/i18n.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
 
 interface ChecklistItem {
   code: string;
-  label: string;
+  labelKey: string;
   status: 'todo' | 'done' | 'na';
 }
 
@@ -13,8 +14,8 @@ interface ChecklistItem {
   standalone: true,
   imports: [SectionCardComponent, MatCheckboxModule],
   template: `
-    <app-section-card title="Checklists" subtitle="Document preparation status for ILR and citizenship.">
-      <p class="track">ILR:</p>
+    <app-section-card [title]="i18n.t('checklists.title')" [subtitle]="i18n.t('checklists.subtitle')">
+      <p class="track">{{ i18n.t('checklists.track.ilr') }}</p>
       <ul>
         @for (item of ilrItems; track item.code) {
           <li>
@@ -23,14 +24,14 @@ interface ChecklistItem {
               [disabled]="item.status === 'na'"
               (change)="onChecklistToggle(item, $event)"
             >
-              {{ item.label }}
+              {{ i18n.t(item.labelKey) }}
             </mat-checkbox>
-            <span class="state" [attr.data-status]="item.status">{{ item.status }}</span>
+            <span class="state" [attr.data-status]="item.status">{{ i18n.t(statusLabelKey(item.status)) }}</span>
           </li>
         }
       </ul>
 
-      <p class="track">Citizenship:</p>
+      <p class="track">{{ i18n.t('checklists.track.citizenship') }}</p>
       <ul>
         @for (item of citizenshipItems; track item.code) {
           <li>
@@ -39,9 +40,9 @@ interface ChecklistItem {
               [disabled]="item.status === 'na'"
               (change)="onChecklistToggle(item, $event)"
             >
-              {{ item.label }}
+              {{ i18n.t(item.labelKey) }}
             </mat-checkbox>
-            <span class="state" [attr.data-status]="item.status">{{ item.status }}</span>
+            <span class="state" [attr.data-status]="item.status">{{ i18n.t(statusLabelKey(item.status)) }}</span>
           </li>
         }
       </ul>
@@ -85,16 +86,20 @@ interface ChecklistItem {
   ]
 })
 export class ChecklistsScreenComponent {
+  protected readonly i18n = inject(I18nService);
+
   protected readonly ilrItems: ChecklistItem[] = [
-    { code: 'life_in_uk', label: 'Life in the UK test pass', status: 'todo' },
-    { code: 'english_b1', label: 'English B1 / exemption', status: 'done' },
-    { code: 'travel_evidence', label: 'Travel evidence cross-check', status: 'done' }
+    { code: 'life_in_uk', labelKey: 'checklists.item.lifeInUk', status: 'todo' },
+    { code: 'english_b1', labelKey: 'checklists.item.englishB1', status: 'done' },
+    { code: 'travel_evidence', labelKey: 'checklists.item.travelEvidence', status: 'done' },
+    { code: 'proof_living', labelKey: 'checklists.item.proofOfLiving', status: 'todo' },
+    { code: 'proof_income', labelKey: 'checklists.item.proofOfIncome', status: 'todo' }
   ];
 
   protected readonly citizenshipItems: ChecklistItem[] = [
-    { code: 'referees', label: 'Referee details prepared', status: 'todo' },
-    { code: 'absence_review', label: 'Absence history reviewed', status: 'done' },
-    { code: 'language', label: 'Language requirement continuity', status: 'na' }
+    { code: 'referees', labelKey: 'checklists.item.referees', status: 'todo' },
+    { code: 'absence_review', labelKey: 'checklists.item.absenceReview', status: 'done' },
+    { code: 'language', labelKey: 'checklists.item.languageContinuity', status: 'na' }
   ];
 
   protected onChecklistToggle(item: ChecklistItem, event: MatCheckboxChange): void {
@@ -102,5 +107,9 @@ export class ChecklistsScreenComponent {
       return;
     }
     item.status = event.checked ? 'done' : 'todo';
+  }
+
+  protected statusLabelKey(status: ChecklistItem['status']): string {
+    return `checklistStatus.${status}`;
   }
 }

@@ -1,9 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
 
 interface OfficialReference {
   docId: string;
-  name: string;
+  nameKey: string;
   url: string;
 }
 
@@ -12,7 +13,10 @@ interface OfficialReference {
   standalone: true,
   imports: [SectionCardComponent],
   template: `
-    <app-section-card title="Official References" subtitle="Whitelisted GOV.UK links with local recent-access metadata.">
+    <app-section-card
+      [title]="i18n.t('officialReferences.title')"
+      [subtitle]="i18n.t('officialReferences.subtitle')"
+    >
       <ul>
         @for (ref of references; track ref.docId) {
           <li>
@@ -22,10 +26,16 @@ interface OfficialReference {
               rel="noopener noreferrer"
               (click)="markAccess(ref.docId)"
             >
-              {{ ref.name }}
+              {{ i18n.t(ref.nameKey) }}
             </a>
             @if (recentAccess()[ref.docId]) {
-              <small>Last accessed: {{ recentAccess()[ref.docId] }}</small>
+              <small>
+                {{
+                  i18n.t('officialReferences.lastAccessed', {
+                    timestamp: recentAccess()[ref.docId]
+                  })
+                }}
+              </small>
             }
           </li>
         }
@@ -57,20 +67,21 @@ interface OfficialReference {
   ]
 })
 export class OfficialReferencesScreenComponent {
+  protected readonly i18n = inject(I18nService);
   protected readonly references: OfficialReference[] = [
     {
       docId: 'bno-settlement',
-      name: 'BN(O) visa and settlement guidance',
+      nameKey: 'officialReferences.bnoSettlement',
       url: 'https://www.gov.uk/british-national-overseas-bno-visa'
     },
     {
       docId: 'life-in-uk',
-      name: 'Life in the UK test',
+      nameKey: 'officialReferences.lifeInUk',
       url: 'https://www.gov.uk/life-in-the-uk-test'
     },
     {
       docId: 'naturalisation',
-      name: 'Apply for citizenship (naturalisation)',
+      nameKey: 'officialReferences.naturalisation',
       url: 'https://www.gov.uk/apply-citizenship-indefinite-leave-to-remain'
     }
   ];

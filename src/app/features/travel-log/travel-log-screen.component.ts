@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { I18nService } from '../../i18n/i18n.service';
 import { TravelTimingContext } from '../../models/travel-timing-context.model';
 import { TravelRecord } from '../../models/spec.models';
 import { TravelLogStateService } from '../../services/travel-log-state.service';
@@ -14,7 +15,7 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
 
 interface CountryOption {
   code: string;
-  label: string;
+  labelKey: string;
   flag: string;
 }
 
@@ -42,16 +43,16 @@ type DateRangeBoundary = 'start' | 'end';
     MatButtonModule
   ],
   template: `
-    <app-section-card title="Travel Log" subtitle="Exact dates + destination country code only.">
+    <app-section-card [title]="i18n.t('travelLog.title')" [subtitle]="i18n.t('travelLog.subtitle')">
       <form class="editor" (ngSubmit)="saveRecord()">
         <mat-grid-list cols="1" rowHeight="7rem" gutterSize="10px" class="form-grid">
           <mat-grid-tile>
             <mat-form-field appearance="outline" class="date-range-field">
-              <mat-label>Travel period</mat-label>
+              <mat-label>{{ i18n.t('travelLog.travelPeriod') }}</mat-label>
               <mat-date-range-input [rangePicker]="picker">
                 <input
                   matStartDate
-                  placeholder="Depart date"
+                  [placeholder]="i18n.t('travelLog.departDate')"
                   [value]="dateRange.start"
                   (dateInput)="onDateRangeChange('start', $event.value)"
                   (dateChange)="onDateRangeChange('start', $event.value)"
@@ -59,7 +60,7 @@ type DateRangeBoundary = 'start' | 'end';
                 />
                 <input
                   matEndDate
-                  placeholder="Return date"
+                  [placeholder]="i18n.t('travelLog.returnDate')"
                   [value]="dateRange.end"
                   (dateInput)="onDateRangeChange('end', $event.value)"
                   (dateChange)="onDateRangeChange('end', $event.value)"
@@ -68,13 +69,13 @@ type DateRangeBoundary = 'start' | 'end';
               </mat-date-range-input>
               <mat-datepicker-toggle matIconSuffix [for]="picker" />
               <mat-date-range-picker #picker />
-              <mat-hint>Select depart and return dates</mat-hint>
+              <mat-hint>{{ i18n.t('travelLog.travelPeriodHint') }}</mat-hint>
             </mat-form-field>
           </mat-grid-tile>
 
           <mat-grid-tile>
             <mat-form-field appearance="outline" class="country-field">
-              <mat-label>Country</mat-label>
+              <mat-label>{{ i18n.t('travelLog.country') }}</mat-label>
               <mat-select
                 name="destinationCountryCode"
                 [(ngModel)]="form.destinationCountryCode"
@@ -83,7 +84,7 @@ type DateRangeBoundary = 'start' | 'end';
                 <mat-select-trigger>{{ countryDisplay(form.destinationCountryCode) }}</mat-select-trigger>
                 @for (country of countries; track country.code) {
                   <mat-option [value]="country.code">
-                    {{ country.flag }} {{ country.code }} - {{ country.label }}
+                    {{ country.flag }} {{ country.code }} - {{ i18n.t(country.labelKey) }}
                   </mat-option>
                 }
               </mat-select>
@@ -92,13 +93,13 @@ type DateRangeBoundary = 'start' | 'end';
 
           <mat-grid-tile>
             <mat-form-field appearance="outline">
-              <mat-label>Tag</mat-label>
+              <mat-label>{{ i18n.t('travelLog.tag') }}</mat-label>
               <mat-select name="tag" [(ngModel)]="form.tag">
-                <mat-option value="">None</mat-option>
-                <mat-option value="holiday">holiday</mat-option>
-                <mat-option value="work">work</mat-option>
-                <mat-option value="family">family</mat-option>
-                <mat-option value="other">other</mat-option>
+                <mat-option value="">{{ i18n.t('travelTag.none') }}</mat-option>
+                <mat-option value="holiday">{{ i18n.t('travelTag.holiday') }}</mat-option>
+                <mat-option value="work">{{ i18n.t('travelTag.work') }}</mat-option>
+                <mat-option value="family">{{ i18n.t('travelTag.family') }}</mat-option>
+                <mat-option value="other">{{ i18n.t('travelTag.other') }}</mat-option>
               </mat-select>
             </mat-form-field>
           </mat-grid-tile>
@@ -110,8 +111,8 @@ type DateRangeBoundary = 'start' | 'end';
             color="primary"
             type="submit"
             class="emoji-btn"
-            [attr.aria-label]="editingRecordId ? 'Update record' : 'Add record'"
-            [attr.title]="editingRecordId ? 'Update record' : 'Add record'"
+            [attr.aria-label]="editingRecordId ? i18n.t('travelLog.action.updateRecord') : i18n.t('travelLog.action.addRecord')"
+            [attr.title]="editingRecordId ? i18n.t('travelLog.action.updateRecord') : i18n.t('travelLog.action.addRecord')"
           >
             {{ editingRecordId ? '✅' : '➕' }}
           </button>
@@ -121,8 +122,8 @@ type DateRangeBoundary = 'start' | 'end';
               type="button"
               class="emoji-btn"
               (click)="cancelEdit()"
-              aria-label="Cancel edit"
-              title="Cancel edit"
+              [attr.aria-label]="i18n.t('travelLog.action.cancelEdit')"
+              [attr.title]="i18n.t('travelLog.action.cancelEdit')"
             >
               ↩️
             </button>
@@ -138,11 +139,11 @@ type DateRangeBoundary = 'start' | 'end';
         <table>
           <thead>
             <tr>
-              <th>Depart</th>
-              <th>Return</th>
-              <th>Country</th>
-              <th>Tag</th>
-              <th>Actions</th>
+              <th>{{ i18n.t('travelLog.table.depart') }}</th>
+              <th>{{ i18n.t('travelLog.table.return') }}</th>
+              <th>{{ i18n.t('travelLog.table.country') }}</th>
+              <th>{{ i18n.t('travelLog.table.tag') }}</th>
+              <th>{{ i18n.t('travelLog.table.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -151,14 +152,14 @@ type DateRangeBoundary = 'start' | 'end';
                 <td>{{ record.departDate }}</td>
                 <td>{{ record.returnDate }}</td>
                 <td>{{ countryDisplay(record.destinationCountryCode) }}</td>
-                <td>{{ record.tag ?? '-' }}</td>
+                <td>{{ tagLabel(record.tag ?? '') }}</td>
                 <td class="row-actions">
                   <button
                     mat-icon-button
                     type="button"
                     (click)="startEdit(record)"
-                    aria-label="Edit record"
-                    title="Edit record"
+                    [attr.aria-label]="i18n.t('travelLog.action.editRecord')"
+                    [attr.title]="i18n.t('travelLog.action.editRecord')"
                   >
                     ✏️
                   </button>
@@ -166,8 +167,8 @@ type DateRangeBoundary = 'start' | 'end';
                     mat-icon-button
                     type="button"
                     (click)="removeRecord(record.id)"
-                    aria-label="Remove record"
-                    title="Remove record"
+                    [attr.aria-label]="i18n.t('travelLog.action.removeRecord')"
+                    [attr.title]="i18n.t('travelLog.action.removeRecord')"
                   >
                     🗑️
                   </button>
@@ -175,7 +176,7 @@ type DateRangeBoundary = 'start' | 'end';
               </tr>
             } @empty {
               <tr>
-                <td colspan="5">No travel records yet.</td>
+                <td colspan="5">{{ i18n.t('travelLog.table.noRecords') }}</td>
               </tr>
             }
           </tbody>
@@ -256,17 +257,18 @@ type DateRangeBoundary = 'start' | 'end';
   ]
 })
 export class TravelLogScreenComponent {
+  protected readonly i18n = inject(I18nService);
   @Input() public travelTimingContext: TravelTimingContext | null = null;
 
   protected readonly countries: CountryOption[] = [
-    { code: 'HK', label: 'Hong Kong', flag: '🇭🇰' },
-    { code: 'GB', label: 'United Kingdom', flag: '🇬🇧' },
-    { code: 'JP', label: 'Japan', flag: '🇯🇵' },
-    { code: 'FR', label: 'France', flag: '🇫🇷' },
-    { code: 'US', label: 'United States', flag: '🇺🇸' },
-    { code: 'CA', label: 'Canada', flag: '🇨🇦' },
-    { code: 'AU', label: 'Australia', flag: '🇦🇺' },
-    { code: 'SG', label: 'Singapore', flag: '🇸🇬' }
+    { code: 'HK', labelKey: 'country.hk', flag: '🇭🇰' },
+    { code: 'GB', labelKey: 'country.gb', flag: '🇬🇧' },
+    { code: 'JP', labelKey: 'country.jp', flag: '🇯🇵' },
+    { code: 'FR', labelKey: 'country.fr', flag: '🇫🇷' },
+    { code: 'US', labelKey: 'country.us', flag: '🇺🇸' },
+    { code: 'CA', labelKey: 'country.ca', flag: '🇨🇦' },
+    { code: 'AU', labelKey: 'country.au', flag: '🇦🇺' },
+    { code: 'SG', labelKey: 'country.sg', flag: '🇸🇬' }
   ];
 
   protected form: TravelFormModel = {
@@ -295,11 +297,11 @@ export class TravelLogScreenComponent {
   protected saveRecord(): void {
     this.errorMessage = '';
     if (!this.form.departDate || !this.form.returnDate || !this.form.destinationCountryCode) {
-      this.errorMessage = 'Depart date, return date, and country are required.';
+      this.errorMessage = this.i18n.t('travelLog.error.requiredFields');
       return;
     }
     if (this.form.returnDate < this.form.departDate) {
-      this.errorMessage = 'Return date must be on or after depart date.';
+      this.errorMessage = this.i18n.t('travelLog.error.returnBeforeDepart');
       return;
     }
 
@@ -358,6 +360,11 @@ export class TravelLogScreenComponent {
     return `${country.flag} ${country.code}`;
   }
 
+  protected tagLabel(tag: TravelRecord['tag'] | ''): string {
+    const key = tag ? `travelTag.${tag}` : 'travelTag.none';
+    return this.i18n.t(key);
+  }
+
   private updateExistingRecord(recordId: string): void {
     const updated = this.updateRecord(recordId, {
       departDate: this.form.departDate,
@@ -367,7 +374,7 @@ export class TravelLogScreenComponent {
       updatedAt: new Date().toISOString()
     });
     if (!updated) {
-      this.errorMessage = 'Record to update was not found.';
+      this.errorMessage = this.i18n.t('travelLog.error.recordNotFound');
     }
   }
 

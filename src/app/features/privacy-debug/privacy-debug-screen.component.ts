@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { I18nService } from '../../i18n/i18n.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
 
 @Component({
@@ -6,10 +7,10 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
   standalone: true,
   imports: [SectionCardComponent],
   template: `
-    <app-section-card title="Privacy / Debug" subtitle="Compliance evidence and local runtime safety summary.">
-      <p><strong>CSP:</strong> default-src 'self'; connect-src 'none'; frame-ancestors 'none'.</p>
-      <p><strong>Session network requests:</strong> 0 (best-effort meter).</p>
-      <p><strong>Telemetry:</strong> No analytics, no remote logging, no background sync.</p>
+    <app-section-card [title]="i18n.t('privacyDebug.title')" [subtitle]="i18n.t('privacyDebug.subtitle')">
+      <p>{{ i18n.t('privacyDebug.csp') }}</p>
+      <p>{{ i18n.t('privacyDebug.network') }}</p>
+      <p>{{ i18n.t('privacyDebug.telemetry') }}</p>
     </app-section-card>
   `,
   styles: [
@@ -21,4 +22,6 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
     `
   ]
 })
-export class PrivacyDebugScreenComponent {}
+export class PrivacyDebugScreenComponent {
+  protected readonly i18n = inject(I18nService);
+}

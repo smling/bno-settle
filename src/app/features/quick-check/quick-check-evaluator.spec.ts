@@ -45,7 +45,10 @@ describe('evaluateQuickCheck', () => {
     });
 
     expect(result.ilr.status).toBe('Not yet');
-    expect(result.ilr.reasons).toContain('Less than 60 months in UK.');
+    expect(result.ilr.reasons).toContainEqual({
+      key: 'quickCheck.reason.ilr.lessThanMonths',
+      params: { months: 60 }
+    });
     expect(result.ilr.missingChecklist.length).toBe(2);
   });
 
@@ -69,7 +72,9 @@ describe('evaluateQuickCheck', () => {
     });
 
     expect(result.citizenship.status).toBe('Needs review');
-    expect(result.citizenship.reasons).toContain('At least one risk flag is yes/unsure.');
+    expect(result.citizenship.reasons).toContainEqual({
+      key: 'quickCheck.reason.citizenship.riskFlag'
+    });
   });
 
   it('flags potential issue when citizenship absences approach thresholds', () => {
@@ -92,6 +97,6 @@ describe('evaluateQuickCheck', () => {
     });
 
     expect(result.citizenship.status).toBe('Potential issue');
-    expect(result.citizenship.reasons[0]).toContain('5-year absences');
+    expect(result.citizenship.reasons[0]?.key).toBe('quickCheck.reason.citizenship.absence5y');
   });
 });

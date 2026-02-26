@@ -16,7 +16,7 @@ describe('ChecklistsScreenComponent', () => {
     await fixture.whenStable();
 
     const checkboxes = fixture.nativeElement.querySelectorAll('mat-checkbox');
-    expect(checkboxes.length).toBe(6);
+    expect(checkboxes.length).toBe(8);
   });
 
   it('should update item status when checkbox state changes', () => {

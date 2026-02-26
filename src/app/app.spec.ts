@@ -30,10 +30,10 @@ describe('App', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const tabs = Array.from(compiled.querySelectorAll<HTMLElement>('[role="tab"]'));
     expect(tabs.map((tab) => tab.textContent?.trim())).toEqual([
-      'Assessment',
-      'Travel and Timing',
-      'Docs and Guidance',
-      'Privacy and Settings'
+      '🧭 Assessment',
+      '✈️ Timing',
+      '📄 Docs',
+      '🔒 Settings'
     ]);
   });
 
