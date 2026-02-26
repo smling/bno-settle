@@ -1,9 +1,9 @@
 <main class="app-layout">
   <header class="hero">
-    <p class="kicker">Privacy-first BN(O) helper</p>
+    <p class="kicker">BN(O) helper</p>
     <h1>{{ title() }}</h1>
     <p class="subtitle">
-      Component scaffold based on `docs/functional-spec.md` and `docs/design-specs/indexeddb-c4.md`
+      Private-first Checklist for BNO-er appling ILR and citizenship;
     </p>
   </header>
 
@@ -19,9 +19,9 @@
     </mat-tab>
     <mat-tab label="Travel and Timing">
       <section class="screen-grid">
-        <app-ilr-date-estimator />
-        <app-travel-log-screen />
-        <app-absence-summary-screen />
+        <app-ilr-date-estimator [travelTimingContext]="travelTimingContext" />
+        <app-travel-log-screen [travelTimingContext]="travelTimingContext" />
+        <app-absence-summary-screen [travelTimingContext]="travelTimingContext" />
         <!-- <app-timeline-screen /> -->
       </section>
     </mat-tab>

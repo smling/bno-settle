@@ -6,8 +6,7 @@ import { Component } from '@angular/core';
   template: `
     <aside class="disclaimer" aria-label="Legal disclaimer">
       <strong>General information only - not legal advice.</strong>
-      <span>Rules change. Verify with official GOV.UK sources.</span>
-      <span>Complex cases may need regulated professional advice.</span>
+      <span>Rules change. Verify with official GOV.UK sources. Complex cases may need regulated professional advice.</span>
     </aside>
   `,
   styles: [
