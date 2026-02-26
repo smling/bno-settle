@@ -1,59 +1,103 @@
-# BnoSettle
+# 🧭 BNO Settle
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.1.
+Private-first helper for BN(O) ILR + citizenship planning.
 
-## Development server
+> ⚠️ General information only. This app is not legal advice. Always verify with official GOV.UK guidance.
 
-To start a local development server, run:
+## ✨ Current Features
 
+### 🧭 Assessment
+- ⚡ Quick Check for ILR and citizenship readiness labels.
+- 🚩 Risk Flags (yes/no/unsure prompts) for review-heavy situations.
+
+### ✈️ Timing
+- 🧮 ILR date estimator from visa approved date (and optional arrived-UK date).
+- 🛫 Travel log with departure/return dates, destination country, and travel tags.
+- 📊 Absence summary with rolling 12-month peaks, 12-month/5-year totals, yearly breakdown, and country summary.
+
+### 📄 Docs
+- ✅ ILR and citizenship preparation checklists.
+- 🏛️ Official GOV.UK reference links.
+
+### 🔒 Settings / Privacy
+- 🌐 Language switch (`English` / `Traditional Chinese`).
+- 🛡️ Privacy-debug summary (CSP/network/telemetry notes).
+- 💾 Local-first persistence for travel timing data (IndexedDB).
+
+## 🧱 Tech Stack
+- Angular 21 (standalone components)
+- Angular Material
+- D3.js (charts)
+- Vitest (unit tests)
+- GitHub Actions (CI + CD)
+
+## 🚀 Local Development
+
+### Prerequisites
+- Node.js 22 LTS recommended
+- npm (project uses `npm@11.x`)
+
+### Install
 ```bash
-ng serve
+npm ci
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+### Start dev server
 ```bash
-ng generate component component-name
+npm start
+```
+Open `http://localhost:4200/`.
+
+### Run tests
+```bash
+npm test -- --watch=false
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
+### Build production
 ```bash
-ng generate --help
+npm run build -- --configuration production
 ```
 
-## Building
+## 🔍 CI / CD
 
-To build the project run:
+### ✅ CI (`push`)
+- Unit tests + coverage report
+- Dependency vulnerability check (`npm audit`)
+- SAST scan (Semgrep)
+- Sensitive data scan (Gitleaks)
+- Audit artifacts retained in GitHub Actions
 
+### 🚢 CD (`push` to `main`)
+- Build and package production app
+- Deploy to GitHub Pages
+- Create git tag
+- Create GitHub Release with packaged artifact
+
+## 🤝 Contributing
+
+### 1. Raise a GitHub Issue
+- Use Issues for bugs, feature requests, and improvements.
+- Include a clear title, expected vs actual behavior, reproduction steps (for bugs), and screenshots/logs when useful.
+
+### 2. Submit a Pull Request
+1. Fork or branch from `main`.
+2. Implement your change in small, focused commits.
+3. Add or update unit tests.
+4. Run checks locally:
 ```bash
-ng build
+npm ci
+npm test -- --watch=false
+npm run build -- --configuration production
 ```
+5. Open a PR and link the related issue (for example: `Closes #123`).
+6. Ensure CI is green before requesting review.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+### ✅ PR Checklist
+- Tests added/updated for behavior changes.
+- No secrets or sensitive data committed.
+- Docs updated when user-facing behavior changed.
+- Budget/performance impact considered for bundle-size changes.
 
-## Running unit tests
+## 📄 License
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+See [LICENSE.md](./LICENSE.md).
