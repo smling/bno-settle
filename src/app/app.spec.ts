@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [provideNoopAnimations()]
     }).compileComponents();
   });
 
@@ -14,10 +16,44 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render hero title', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, bno-settle');
+    expect(compiled.querySelector('h1')?.textContent).toContain('BNO Settle');
+  });
+
+  it('should render material tabs for grouped screens', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const tabs = Array.from(compiled.querySelectorAll<HTMLElement>('[role="tab"]'));
+    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual([
+      'Assessment',
+      'Travel and Timing',
+      'Docs and Guidance',
+      'Privacy and Settings'
+    ]);
+  });
+
+  it('should include ILR date estimator in assessment tab', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('ILR Date Estimator');
+  });
+
+  it('should show travel tab content when selected', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const tabs = Array.from(compiled.querySelectorAll<HTMLElement>('[role="tab"]'));
+    tabs[1].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(compiled.textContent).toContain('Absence Summary');
   });
 });

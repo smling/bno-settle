@@ -1,0 +1,69 @@
+import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { IlrEstimateStateService } from '../../services/ilr-estimate-state.service';
+import { IlrDateEstimatorComponent } from './ilr-date-estimator.component';
+
+describe('IlrDateEstimatorComponent', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [IlrDateEstimatorComponent],
+      providers: [provideNoopAnimations()]
+    }).compileComponents();
+  });
+
+  it('should render calculated ILR timeline after submit', async () => {
+    const fixture = TestBed.createComponent(IlrDateEstimatorComponent);
+    const component = fixture.componentInstance;
+    component.visaApprovedDate = '2024-03-01';
+
+    component.calculate();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent;
+    expect(text).toContain('Visa expiry date: 2029-03-01');
+    expect(text).toContain('Earliest ILR apply date: 2029-02-01');
+  });
+
+  it('should calculate when the form is submitted', async () => {
+    const fixture = TestBed.createComponent(IlrDateEstimatorComponent);
+    const component = fixture.componentInstance;
+    component.visaApprovedDate = '2024-03-01';
+    fixture.detectChanges();
+
+    const form = (fixture.nativeElement as HTMLElement).querySelector('form');
+    form?.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent;
+    expect(component.estimate).not.toBeNull();
+    expect(text).toContain('Earliest ILR apply date: 2029-02-01');
+  });
+
+  it('should show validation message for invalid input', async () => {
+    const fixture = TestBed.createComponent(IlrDateEstimatorComponent);
+    const component = fixture.componentInstance;
+    component.visaApprovedDate = 'invalid-date';
+
+    component.calculate();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Enter a valid visa approved date.'
+    );
+  });
+
+  it('should publish calculated estimate to shared ILR state', () => {
+    const state = TestBed.inject(IlrEstimateStateService);
+    const fixture = TestBed.createComponent(IlrDateEstimatorComponent);
+    const component = fixture.componentInstance;
+    component.visaApprovedDate = '2024-03-01';
+
+    component.calculate();
+
+    expect(state.visaApprovedDate()).toBe('2024-03-01');
+    expect(state.estimate()?.visaExpiryDate).toBe('2029-03-01');
+  });
+});

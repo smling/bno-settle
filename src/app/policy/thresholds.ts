@@ -1,0 +1,7 @@
+export const ILR_REQUIRED_MONTHS = 60;
+export const ILR_MAX_ABSENCE_ROLLING_12M = 180;
+export const CITIZENSHIP_WAIT_MONTHS_AFTER_ILR = 12;
+export const CIT_MAX_ABSENCE_5Y = 450;
+export const CIT_MAX_ABSENCE_LAST_12M = 90;
+
+export const CIT_APPROACHING_RATIO = 0.9;

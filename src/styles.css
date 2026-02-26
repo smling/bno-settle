@@ -1,1 +1,62 @@
-/* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/azure-blue.css';
+@import '@fontsource/noto-sans-tc/400.css';
+@import '@fontsource/noto-sans-tc/500.css';
+@import '@fontsource/noto-sans-tc/700.css';
+
+:root {
+  --mat-app-body-text-font:
+    'Noto Sans TC',
+    'PingFang TC',
+    'Microsoft JhengHei',
+    'Noto Sans',
+    sans-serif;
+  --mat-app-title-text-font:
+    'Noto Sans TC',
+    'PingFang TC',
+    'Microsoft JhengHei',
+    'Noto Sans',
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans', sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans', sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans', sans-serif;
+}
+
+.mat-typography,
+.mdc-typography,
+.mat-mdc-tab-group,
+.mat-mdc-tab-header,
+.mat-mdc-tab,
+.mdc-tab__text-label,
+.mat-mdc-button-base,
+.mdc-button__label,
+.mat-mdc-form-field,
+.mat-mdc-select-panel,
+.mat-mdc-option,
+.mat-expansion-panel,
+.mat-expansion-panel-header,
+.mat-mdc-card {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans', sans-serif !important;
+}
+
+.mat-mdc-tab-group *,
+.mat-mdc-card *,
+.mat-expansion-panel *,
+.mat-mdc-form-field *,
+.mat-mdc-select-panel * {
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans', sans-serif !important;
+}
