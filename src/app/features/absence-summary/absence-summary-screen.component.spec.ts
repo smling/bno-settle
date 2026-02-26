@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { IlrEstimateStateService } from '../../services/ilr-estimate-state.service';
 import { AbsenceSummaryScreenComponent } from './absence-summary-screen.component';
+import { TravelLogScreenComponent } from '../travel-log/travel-log-screen.component';
 
 describe('AbsenceSummaryScreenComponent', () => {
   beforeEach(async () => {
@@ -54,5 +55,45 @@ describe('AbsenceSummaryScreenComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'Calculate ILR dates first. This summary uses visa approved date and visa expiry date.'
     );
+  });
+
+  it('should recompute summary when travel-log records change', async () => {
+    const state = TestBed.inject(IlrEstimateStateService);
+    state.setEstimate('2024-03-01', {
+      visaApprovedDate: '2024-03-01',
+      visaExpiryDate: '2029-03-01',
+      earliestIlrApplyDate: '2029-02-01'
+    });
+
+    const absenceFixture = TestBed.createComponent(AbsenceSummaryScreenComponent);
+    absenceFixture.detectChanges();
+    await absenceFixture.whenStable();
+    const absenceComponent = absenceFixture.componentInstance as unknown as {
+      summary: { daysOutsideLast5YearsTotal: number };
+    };
+    const beforeTotal = absenceComponent.summary.daysOutsideLast5YearsTotal;
+
+    const travelFixture = TestBed.createComponent(TravelLogScreenComponent);
+    const travelComponent = travelFixture.componentInstance as unknown as {
+      form: {
+        departDate: string;
+        returnDate: string;
+        destinationCountryCode: string;
+        tag: 'holiday' | 'work' | 'family' | 'other' | '';
+      };
+      saveRecord: () => void;
+    };
+
+    travelComponent.form = {
+      departDate: '2025-07-01',
+      returnDate: '2025-07-01',
+      destinationCountryCode: 'US',
+      tag: 'holiday'
+    };
+    travelComponent.saveRecord();
+
+    await absenceFixture.whenStable();
+
+    expect(absenceComponent.summary.daysOutsideLast5YearsTotal).toBe(beforeTotal + 1);
   });
 });

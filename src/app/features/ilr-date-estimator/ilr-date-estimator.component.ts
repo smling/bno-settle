@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { TravelTimingContext } from '../../models/travel-timing-context.model';
 import { IlrDateCalculatorService, IlrTimelineEstimate } from '../../services/ilr-date-calculator.service';
 import { IlrEstimateStateService } from '../../services/ilr-estimate-state.service';
 import { DateInputComponent } from '../../shared/date-input/date-input.component';
@@ -96,7 +97,9 @@ import { SectionCardComponent } from '../../shared/section-card/section-card.com
     `
   ]
 })
-export class IlrDateEstimatorComponent {
+export class IlrDateEstimatorComponent implements OnInit, OnChanges {
+  @Input() public travelTimingContext: TravelTimingContext | null = null;
+
   public visaApprovedDate = '';
   public estimate: IlrTimelineEstimate | null = null;
   public showError = false;
@@ -104,15 +107,39 @@ export class IlrDateEstimatorComponent {
   constructor(
     private readonly ilrDateCalculatorService: IlrDateCalculatorService,
     private readonly ilrEstimateStateService: IlrEstimateStateService
-  ) {
-    this.visaApprovedDate = this.ilrEstimateStateService.visaApprovedDate();
-    this.estimate = this.ilrEstimateStateService.estimate();
-    this.showError = this.visaApprovedDate !== '' && this.estimate === null;
+  ) {}
+
+  public ngOnInit(): void {
+    this.syncFromState();
+  }
+
+  public ngOnChanges(changes: SimpleChanges): void {
+    if (changes['travelTimingContext']) {
+      this.syncFromState();
+    }
   }
 
   public calculate(): void {
     this.estimate = this.ilrDateCalculatorService.estimateFromVisaApprovedDate(this.visaApprovedDate);
     this.showError = this.estimate === null;
+    if (this.travelTimingContext) {
+      this.travelTimingContext.visaApprovedDate.set(this.visaApprovedDate);
+      this.travelTimingContext.estimate.set(this.estimate);
+    }
     this.ilrEstimateStateService.setEstimate(this.visaApprovedDate, this.estimate);
+  }
+
+  private syncFromState(): void {
+    if (this.travelTimingContext) {
+      this.visaApprovedDate = this.travelTimingContext.visaApprovedDate();
+      this.estimate = this.travelTimingContext.estimate();
+      this.showError = this.visaApprovedDate !== '' && this.estimate === null;
+      return;
+    }
+    if (this.visaApprovedDate === '' && this.estimate === null) {
+      this.visaApprovedDate = this.ilrEstimateStateService.visaApprovedDate();
+      this.estimate = this.ilrEstimateStateService.estimate();
+    }
+    this.showError = this.visaApprovedDate !== '' && this.estimate === null;
   }
 }

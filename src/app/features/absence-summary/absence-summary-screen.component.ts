@@ -1,11 +1,12 @@
-import { Component, effect } from '@angular/core';
+import { Component, computed, Input, signal } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { TravelTimingContext } from '../../models/travel-timing-context.model';
 import { ComputedAbsenceSummary, TravelRecord } from '../../models/spec.models';
 import { IlrEstimateStateService } from '../../services/ilr-estimate-state.service';
+import { TravelLogStateService } from '../../services/travel-log-state.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
 import { AbsenceSummaryMetricsComponent } from './absence-summary-metrics.component';
 import { RollingPeaksChartComponent } from './rolling-peaks-chart.component';
-import { SEED_TRAVEL_RECORDS } from '../travel-log/travel-log-seed-records';
 
 interface YearlyAbsenceRow {
   year: number;
@@ -16,6 +17,15 @@ interface YearlyAbsenceRow {
 interface DateRange {
   start: Date;
   end: Date;
+}
+
+interface AbsenceSummaryViewModel {
+  visaApprovedDate: string;
+  visaExpiryDate: string;
+  summary: ComputedAbsenceSummary;
+  yearlyBreakdown: YearlyAbsenceRow[];
+  countryTotalsLast12Months: Array<{ code: string; days: number }>;
+  showMissingEstimate: boolean;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -129,67 +139,115 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
   ]
 })
 export class AbsenceSummaryScreenComponent {
-  protected readonly records: TravelRecord[] = SEED_TRAVEL_RECORDS.map((record) => ({ ...record }));
-  protected visaApprovedDate = '';
-  protected visaExpiryDate = '';
-  protected summary: ComputedAbsenceSummary = this.createEmptySummary();
-  protected yearlyBreakdown: YearlyAbsenceRow[] = [];
-  protected countryTotalsLast12Months: Array<{ code: string; days: number }> = [];
-  protected showMissingEstimate = true;
+  private readonly travelTimingContextState = signal<TravelTimingContext | null>(null);
 
-  constructor(private readonly ilrEstimateStateService: IlrEstimateStateService) {
-    effect(() => {
-      const estimate = this.ilrEstimateStateService.estimate();
-      if (!estimate) {
-        this.summary = this.createEmptySummary();
-        this.yearlyBreakdown = [];
-        this.countryTotalsLast12Months = [];
-        this.visaApprovedDate = '';
-        this.visaExpiryDate = '';
-        this.showMissingEstimate = true;
-        return;
-      }
-      this.calculateSummaryForRange(estimate.visaApprovedDate, estimate.visaExpiryDate);
-    });
+  @Input() public set travelTimingContext(value: TravelTimingContext | null) {
+    this.travelTimingContextState.set(value);
   }
 
-  private calculateSummaryForRange(rangeStartIso: string, rangeEndIso: string): void {
+  protected readonly viewModel = computed(() =>
+    this.computeViewModel(this.records(), this.estimate())
+  );
+
+  constructor(
+    private readonly ilrEstimateStateService: IlrEstimateStateService,
+    private readonly travelLogStateService: TravelLogStateService
+  ) {}
+
+  private records(): TravelRecord[] {
+    const context = this.travelTimingContextState();
+    if (context) {
+      return context.records();
+    }
+    return this.travelLogStateService.records();
+  }
+
+  private estimate(): { visaApprovedDate: string; visaExpiryDate: string } | null {
+    const context = this.travelTimingContextState();
+    if (context) {
+      return context.estimate();
+    }
+    return this.ilrEstimateStateService.estimate();
+  }
+
+  protected get visaApprovedDate(): string {
+    return this.viewModel().visaApprovedDate;
+  }
+
+  protected get visaExpiryDate(): string {
+    return this.viewModel().visaExpiryDate;
+  }
+
+  protected get summary(): ComputedAbsenceSummary {
+    return this.viewModel().summary;
+  }
+
+  protected get yearlyBreakdown(): YearlyAbsenceRow[] {
+    return this.viewModel().yearlyBreakdown;
+  }
+
+  protected get countryTotalsLast12Months(): Array<{ code: string; days: number }> {
+    return this.viewModel().countryTotalsLast12Months;
+  }
+
+  protected get showMissingEstimate(): boolean {
+    return this.viewModel().showMissingEstimate;
+  }
+
+  private computeViewModel(
+    records: TravelRecord[],
+    estimate: { visaApprovedDate: string; visaExpiryDate: string } | null
+  ): AbsenceSummaryViewModel {
+    if (!estimate) {
+      return this.createMissingViewModel();
+    }
+    return this.calculateSummaryForRange(records, estimate.visaApprovedDate, estimate.visaExpiryDate);
+  }
+
+  private calculateSummaryForRange(
+    records: TravelRecord[],
+    rangeStartIso: string,
+    rangeEndIso: string
+  ): AbsenceSummaryViewModel {
     const rangeStart = this.parseIsoDate(rangeStartIso);
     const rangeEnd = this.parseIsoDate(rangeEndIso);
     if (!rangeStart || !rangeEnd || rangeStart.getTime() > rangeEnd.getTime()) {
-      this.summary = this.createEmptySummary();
-      this.yearlyBreakdown = [];
-      this.countryTotalsLast12Months = [];
-      this.visaApprovedDate = '';
-      this.visaExpiryDate = '';
-      this.showMissingEstimate = true;
-      return;
+      return this.createMissingViewModel();
     }
 
     const last12MonthsStart = this.addDaysUtc(rangeEnd, -364);
-    const byCountryLast12Months = this.countDaysByCountry(
-      this.records,
-      last12MonthsStart,
-      rangeEnd
-    );
+    const byCountryLast12Months = this.countDaysByCountry(records, last12MonthsStart, rangeEnd);
     const daysOutsideLast12Months = this.sumByCountry(byCountryLast12Months);
-    const daysOutsideLast5YearsTotal = this.countDaysOutside(this.records, rangeStart, rangeEnd);
-    const rollingPeaks = this.computeRolling12MonthPeaks(this.records, rangeStart, rangeEnd);
+    const daysOutsideLast5YearsTotal = this.countDaysOutside(records, rangeStart, rangeEnd);
+    const rollingPeaks = this.computeRolling12MonthPeaks(records, rangeStart, rangeEnd);
 
-    this.summary = {
-      daysOutsideLast12Months,
-      maxDaysOutsideInAnyRolling12Months: rollingPeaks.maxDaysOutside,
-      daysOutsideLast5YearsTotal,
-      rolling12MonthPeaks: rollingPeaks.windows,
-      byCountryLast12Months: Object.fromEntries(byCountryLast12Months)
+    return {
+      summary: {
+        daysOutsideLast12Months,
+        maxDaysOutsideInAnyRolling12Months: rollingPeaks.maxDaysOutside,
+        daysOutsideLast5YearsTotal,
+        rolling12MonthPeaks: rollingPeaks.windows,
+        byCountryLast12Months: Object.fromEntries(byCountryLast12Months)
+      },
+      yearlyBreakdown: this.groupByYear(records, rangeStart, rangeEnd),
+      countryTotalsLast12Months: Array.from(byCountryLast12Months.entries())
+        .map(([code, days]) => ({ code, days }))
+        .sort((a, b) => b.days - a.days || a.code.localeCompare(b.code)),
+      visaApprovedDate: rangeStartIso,
+      visaExpiryDate: rangeEndIso,
+      showMissingEstimate: false
     };
-    this.yearlyBreakdown = this.groupByYear(this.records, rangeStart, rangeEnd);
-    this.countryTotalsLast12Months = Array.from(byCountryLast12Months.entries())
-      .map(([code, days]) => ({ code, days }))
-      .sort((a, b) => b.days - a.days || a.code.localeCompare(b.code));
-    this.visaApprovedDate = rangeStartIso;
-    this.visaExpiryDate = rangeEndIso;
-    this.showMissingEstimate = false;
+  }
+
+  private createMissingViewModel(): AbsenceSummaryViewModel {
+    return {
+      visaApprovedDate: '',
+      visaExpiryDate: '',
+      summary: this.createEmptySummary(),
+      yearlyBreakdown: [],
+      countryTotalsLast12Months: [],
+      showMissingEstimate: true
+    };
   }
 
   private createEmptySummary(): ComputedAbsenceSummary {

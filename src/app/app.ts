@@ -11,6 +11,8 @@ import { RiskFlagsScreenComponent } from './features/risk-flags/risk-flags-scree
 import { SettingsScreenComponent } from './features/settings/settings-screen.component';
 import { TimelineScreenComponent } from './features/timeline/timeline-screen.component';
 import { TravelLogScreenComponent } from './features/travel-log/travel-log-screen.component';
+import { SEED_TRAVEL_RECORDS } from './features/travel-log/travel-log-seed-records';
+import { TravelTimingContext } from './models/travel-timing-context.model';
 import { DisclaimerBannerComponent } from './shared/disclaimer-banner/disclaimer-banner.component';
 
 
@@ -36,4 +38,5 @@ import { DisclaimerBannerComponent } from './shared/disclaimer-banner/disclaimer
 })
 export class App {
   protected readonly title = signal('BNO Settle');
+  protected readonly travelTimingContext = new TravelTimingContext(SEED_TRAVEL_RECORDS);
 }

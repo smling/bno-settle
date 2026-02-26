@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -7,9 +7,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { TravelTimingContext } from '../../models/travel-timing-context.model';
 import { TravelRecord } from '../../models/spec.models';
+import { TravelLogStateService } from '../../services/travel-log-state.service';
 import { SectionCardComponent } from '../../shared/section-card/section-card.component';
-import { SEED_TRAVEL_RECORDS } from './travel-log-seed-records';
 
 interface CountryOption {
   code: string;
@@ -255,6 +256,8 @@ type DateRangeBoundary = 'start' | 'end';
   ]
 })
 export class TravelLogScreenComponent {
+  @Input() public travelTimingContext: TravelTimingContext | null = null;
+
   protected readonly countries: CountryOption[] = [
     { code: 'HK', label: 'Hong Kong', flag: '🇭🇰' },
     { code: 'GB', label: 'United Kingdom', flag: '🇬🇧' },
@@ -265,8 +268,6 @@ export class TravelLogScreenComponent {
     { code: 'AU', label: 'Australia', flag: '🇦🇺' },
     { code: 'SG', label: 'Singapore', flag: '🇸🇬' }
   ];
-
-  protected readonly records: TravelRecord[] = SEED_TRAVEL_RECORDS.map((record) => ({ ...record }));
 
   protected form: TravelFormModel = {
     departDate: '',
@@ -281,6 +282,15 @@ export class TravelLogScreenComponent {
 
   protected editingRecordId: string | null = null;
   protected errorMessage = '';
+
+  constructor(private readonly travelLogStateService: TravelLogStateService) {}
+
+  protected get records(): TravelRecord[] {
+    if (this.travelTimingContext) {
+      return this.travelTimingContext.records();
+    }
+    return this.travelLogStateService.records();
+  }
 
   protected saveRecord(): void {
     this.errorMessage = '';
@@ -300,7 +310,7 @@ export class TravelLogScreenComponent {
     }
 
     const now = new Date().toISOString();
-    this.records.unshift({
+    this.addRecord({
       id: `trip_${Date.now()}`,
       departDate: this.form.departDate,
       returnDate: this.form.returnDate,
@@ -334,10 +344,7 @@ export class TravelLogScreenComponent {
   }
 
   protected removeRecord(recordId: string): void {
-    const index = this.records.findIndex((record) => record.id === recordId);
-    if (index >= 0) {
-      this.records.splice(index, 1);
-    }
+    this.removeRecordFromState(recordId);
     if (this.editingRecordId === recordId) {
       this.cancelEdit();
     }
@@ -352,16 +359,51 @@ export class TravelLogScreenComponent {
   }
 
   private updateExistingRecord(recordId: string): void {
-    const record = this.records.find((item) => item.id === recordId);
-    if (!record) {
+    const updated = this.updateRecord(recordId, {
+      departDate: this.form.departDate,
+      returnDate: this.form.returnDate,
+      destinationCountryCode: this.form.destinationCountryCode,
+      tag: this.form.tag || undefined,
+      updatedAt: new Date().toISOString()
+    });
+    if (!updated) {
       this.errorMessage = 'Record to update was not found.';
+    }
+  }
+
+  private addRecord(record: TravelRecord): void {
+    if (this.travelTimingContext) {
+      this.travelTimingContext.records.update((records) => [record, ...records]);
       return;
     }
-    record.departDate = this.form.departDate;
-    record.returnDate = this.form.returnDate;
-    record.destinationCountryCode = this.form.destinationCountryCode;
-    record.tag = this.form.tag || undefined;
-    record.updatedAt = new Date().toISOString();
+    this.travelLogStateService.addRecord(record);
+  }
+
+  private updateRecord(recordId: string, patch: Partial<TravelRecord>): boolean {
+    if (this.travelTimingContext) {
+      let didUpdate = false;
+      this.travelTimingContext.records.update((records) =>
+        records.map((record) => {
+          if (record.id !== recordId) {
+            return record;
+          }
+          didUpdate = true;
+          return { ...record, ...patch };
+        })
+      );
+      return didUpdate;
+    }
+    return this.travelLogStateService.updateRecord(recordId, patch);
+  }
+
+  private removeRecordFromState(recordId: string): void {
+    if (this.travelTimingContext) {
+      this.travelTimingContext.records.update((records) =>
+        records.filter((record) => record.id !== recordId)
+      );
+      return;
+    }
+    this.travelLogStateService.removeRecord(recordId);
   }
 
   private resetForm(): void {
