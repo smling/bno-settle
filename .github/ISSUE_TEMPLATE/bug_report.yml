@@ -1,0 +1,114 @@
+name: Bug report
+description: Report a reproducible problem to help us fix it quickly.
+title: "[Bug]: "
+labels:
+  - bug
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+        Please provide enough detail for us to reproduce and verify the issue.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checklist
+      description: Please confirm before submitting.
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: I can reproduce this issue on the latest code in `main`.
+          required: true
+        - label: I did not include secrets, tokens, or personal/sensitive data.
+          required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug summary
+      description: Clear and concise description of the problem.
+      placeholder: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide exact steps so we can reproduce reliably.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. Enter ...
+        4. See error ...
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Critical (blocks release or major function)
+        - High (major feature impacted)
+        - Medium (workaround exists)
+        - Low (minor issue)
+    validations:
+      required: true
+
+  - type: input
+    id: app_version
+    attributes:
+      label: App version / commit
+      description: Version number, tag, or commit SHA where the bug was observed.
+      placeholder: e.g. v2026.02.26-ab12cd3
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      multiple: true
+      options:
+        - Chrome
+        - Edge
+        - Firefox
+        - Safari
+        - Other
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: e.g. Windows 11, macOS 15, Ubuntu 24.04
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or screenshots
+      description: Paste sanitized logs or add screenshots if available.
+      render: text
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Any extra details that may help triage.

@@ -1,0 +1,98 @@
+name: Feature request
+description: Suggest an improvement or new capability.
+title: "[Feature]: "
+labels:
+  - enhancement
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing an improvement.
+        Share the user problem first, then the proposed solution.
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Pre-flight checklist
+      description: Please confirm before submitting.
+      options:
+        - label: I searched existing issues and did not find a duplicate request.
+          required: true
+        - label: This request describes one feature/change only.
+          required: true
+        - label: I did not include secrets, tokens, or personal/sensitive data.
+          required: true
+
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: Problem statement
+      description: What user or business problem are we solving?
+      placeholder: As a ..., I need ..., so that ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed solution
+      description: Describe your preferred solution.
+      placeholder: Describe behavior, UX flow, and any technical notes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What alternatives have you considered and why not use them?
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Impacted areas
+      options:
+        - label: UI / UX
+        - label: Business logic
+        - label: Data persistence
+        - label: Localization / i18n
+        - label: CI / CD
+        - label: Documentation
+        - label: Security
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: Define clear, testable outcomes.
+      placeholder: |
+        - [ ] Given ..., when ..., then ...
+        - [ ] Given ..., when ..., then ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P1 - High
+        - P2 - Medium
+        - P3 - Low
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to open a PR for this feature.
+        - label: I can help validate this feature once implemented.
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Mockups, references, links, or other notes.
